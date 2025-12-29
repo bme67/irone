@@ -206,7 +206,7 @@ const App: React.FC = () => {
             </form>
             <div className="mt-3 md:mt-4 flex justify-between items-center opacity-40">
               <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">OFFLINE BRAIN ACTIVE</span>
-              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">10,000+ ROASTS</span>
+              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">60,000+ UNIQUE ROASTS</span>
             </div>
           </div>
         </div>
