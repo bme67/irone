@@ -3,19 +3,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>irone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #09090b;
+            --text-primary: #f4f4f5;
+        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000000;
-            color: #e4e4e7;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
             overflow: hidden;
+            height: 100dvh; /* Dynamic viewport height for mobile browsers */
         }
         .mono {
             font-family: 'JetBrains Mono', monospace;
@@ -39,17 +44,51 @@
         .animate-staggered > *:nth-child(1) { animation-delay: 0.1s; }
         .animate-staggered > *:nth-child(2) { animation-delay: 0.2s; }
         .animate-staggered > *:nth-child(3) { animation-delay: 0.3s; }
-        .animate-staggered > *:nth-child(4) { animation-delay: 0.4s; }
-        .animate-staggered > *:nth-child(5) { animation-delay: 0.5s; }
-        .animate-staggered > *:nth-child(6) { animation-delay: 0.6s; }
 
         @keyframes pulse-ring {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 0.2; }
-            100% { transform: scale(0.8); opacity: 0.5; }
+            0% { transform: scale(0.8); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.1; }
+            100% { transform: scale(0.8); opacity: 0.3; }
         }
         .ring-pulse {
             animation: pulse-ring 3s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes reveal {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        .type-writer {
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 2px solid white;
+            animation: reveal 1.5s steps(20, end) forwards, blink 0.7s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { border-color: transparent }
+            50% { border-color: white }
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(255,255,255,0); }
+            50% { text-shadow: 0 0 30px rgba(255,255,255,0.2); }
+        }
+        .animate-glow {
+            animation: glow 4s infinite ease-in-out;
+        }
+
+        /* Prevent layout shift on mobile when keyboard appears */
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
         }
     </style>
 <script type="importmap">
