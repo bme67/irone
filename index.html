@@ -20,7 +20,7 @@
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
             overflow: hidden;
-            height: 100dvh; /* Dynamic viewport height for mobile browsers */
+            height: 100dvh;
         }
         .mono {
             font-family: 'JetBrains Mono', monospace;
@@ -86,7 +86,6 @@
             animation: glow 4s infinite ease-in-out;
         }
 
-        /* Prevent layout shift on mobile when keyboard appears */
         .safe-bottom {
             padding-bottom: env(safe-area-inset-bottom);
         }
@@ -104,5 +103,6 @@
 </head>
 <body>
     <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>

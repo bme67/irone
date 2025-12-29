@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Role, Message } from './types';
-import { Icons, SAVAGE_TRIGGERS, NICE_TRIGGERS } from './constants';
-import { streamWithSavageAI } from './services/gemini';
+import { Role, Message } from './types.ts';
+import { Icons, SAVAGE_TRIGGERS, NICE_TRIGGERS } from './constants.tsx';
+import { streamWithSavageAI } from './services/gemini.ts';
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);

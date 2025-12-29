@@ -1,13 +1,20 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { STANDARD_SYSTEM_INSTRUCTION, UNFILTERED_SYSTEM_INSTRUCTION } from "../constants";
+import { STANDARD_SYSTEM_INSTRUCTION, UNFILTERED_SYSTEM_INSTRUCTION } from "../constants.tsx";
 
 export const streamWithSavageAI = async function* (
   message: string,
   history: { role: string; parts: { text: string }[] }[] = [],
   isSavageMode: boolean = false
 ) {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+  // Defensive check for process existence in hosted static environments
+  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
+  
+  if (!apiKey) {
+    throw new Error("Missing API Key. Add it to your Vercel/Netlify Environment Variables.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const instruction = isSavageMode ? UNFILTERED_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
 
   const streamResponse = await ai.models.generateContentStream({
