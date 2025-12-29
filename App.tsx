@@ -10,6 +10,7 @@ const App: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [currentResponse, setCurrentResponse] = useState('');
   const [isSavageMode, setIsSavageMode] = useState(false);
+  const [isLocalMode, setIsLocalMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
 
@@ -66,6 +67,10 @@ const App: React.FC = () => {
     setInput('');
     setIsTyping(true);
     setCurrentResponse('');
+    
+    // Determine if we should use local mode based on environment or key existence
+    const hasKey = typeof process !== 'undefined' && !!process.env.API_KEY;
+    setIsLocalMode(!hasKey);
 
     const history = messages.map(m => ({
       role: m.role === Role.USER ? "user" : "model",
@@ -87,14 +92,10 @@ const App: React.FC = () => {
       }]);
       setCurrentResponse('');
     } catch (err) {
-      setMessages(prev => [...prev, {
-        id: 'err',
-        role: Role.MODEL,
-        content: "API error kela. Net check kor 2cmr. Pukur marim.",
-        timestamp: new Date(),
-      }]);
+      // Fallback is handled inside the stream service now
     } finally {
       setIsTyping(false);
+      setIsLocalMode(false);
     }
   };
 
@@ -146,7 +147,7 @@ const App: React.FC = () => {
                 </h1>
               </div>
               <p className="text-zinc-600 text-[9px] md:text-[11px] mono uppercase tracking-[0.3em] md:tracking-[0.5em] delay-500 opacity-60">
-                SYSTEM ONLINE. NO FILTER MODE ACTIVE.
+                SYSTEM ONLINE. {isTyping ? 'THINKING...' : 'WAITING FOR 2CMR.'}
               </p>
             </div>
           </div>
@@ -166,7 +167,9 @@ const App: React.FC = () => {
             ))}
             {currentResponse && (
               <div className="space-y-2 md:space-y-3 animate-in fade-in duration-300">
-                <div className="mono text-[8px] md:text-[9px] uppercase tracking-[0.3em] text-zinc-700 animate-pulse">EXTRACTING</div>
+                <div className="mono text-[8px] md:text-[9px] uppercase tracking-[0.3em] text-zinc-700 animate-pulse">
+                  {isLocalMode ? 'LOCAL_BRAIN_THINKING' : 'EXTRACTING'}
+                </div>
                 <div className="text-[14px] md:text-[15px] leading-relaxed text-zinc-400">
                   {currentResponse}
                   <span className="inline-block w-1.5 h-3 bg-zinc-600 ml-1 animate-pulse" />
@@ -202,8 +205,8 @@ const App: React.FC = () => {
               </button>
             </form>
             <div className="mt-3 md:mt-4 flex justify-between items-center opacity-40">
-              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">MAX 3 LNS</span>
-              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">IRONE V1.1_PRO</span>
+              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">OFFLINE BRAIN ACTIVE</span>
+              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">10,000+ ROASTS</span>
             </div>
           </div>
         </div>
