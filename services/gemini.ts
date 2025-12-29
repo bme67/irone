@@ -10,10 +10,10 @@ export const streamWithSavageAI = async function* (
 ) {
   const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
   
-  // If no API Key, use local brain immediately
+  // If no API Key, use local brain immediately with current message for intent detection
   if (!apiKey) {
     console.warn("No API Key found. Using Local Brain.");
-    yield* getLocalResponseStream();
+    yield* getLocalResponseStream(message);
     return;
   }
 
@@ -53,11 +53,11 @@ export const streamWithSavageAI = async function* (
     }
 
     if (!hasProducedText) {
-      yield* getLocalResponseStream();
+      yield* getLocalResponseStream(message);
     }
 
   } catch (error: any) {
     console.error("API Failed, falling back to Local Brain:", error);
-    yield* getLocalResponseStream();
+    yield* getLocalResponseStream(message);
   }
 };
