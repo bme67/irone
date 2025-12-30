@@ -4,8 +4,8 @@ import { Role, Message } from './types.ts';
 import { Icons, THEMES, ThemeType } from './constants.tsx';
 import { streamWithAI } from './services/gemini.ts';
 
-const QUOTA_LIMIT = 20;
-const RESET_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
+const QUOTA_LIMIT = 15; // Set to 15 per hour as requested
+const RESET_WINDOW_MS = 60 * 60 * 1000; // 1 hour window
 
 const ShootingStars = ({ active }: { active: boolean }) => {
   const [stars, setStars] = useState<{ id: number; top: number; left: number; width: number }[]>([]);
@@ -338,12 +338,22 @@ const App: React.FC = () => {
     if (!val || isTyping) return;
     
     let currentlyLabiba = isLabibaMode;
-    const labibaKeywords = ["labiba"];
+    const labibaKeywords = [
+      "i am labiba", 
+      "moi labiba", 
+      "labiba nushan", 
+      "it's labiba", 
+      "queen labiba", 
+      "i'm labiba",
+      "labiba name",
+      "name is labiba"
+    ];
+
     if (labibaKeywords.some(k => val.toLowerCase().includes(k))) {
       currentlyLabiba = true;
       setIsLabibaMode(true);
       setShowRomance(true);
-      setTimeout(() => setShowRomance(false), 6000);
+      setTimeout(() => setShowRomance(false), 8000);
     }
     
     const userMsg: Message = { id: Date.now().toString(), role: Role.USER, content: val, timestamp: new Date() };
@@ -408,7 +418,6 @@ const App: React.FC = () => {
         <div className="max-w-3xl mx-auto w-full flex flex-col h-full">
           {messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center pb-12 sm:pb-24">
-              {/* Preload message removed per user request. Displaying locked state only if necessary. */}
               {isQuotaLocked && <p className="mono text-[9px] sm:text-[11px] mt-6 sm:mt-8 text-orange-500 font-bold uppercase tracking-widest animate-pulse">SYSTEM_LOCKED: {timeLeft}</p>}
             </div>
           ) : (

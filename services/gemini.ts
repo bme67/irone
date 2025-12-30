@@ -9,7 +9,18 @@ export const streamWithAI = async function* (
   isLabibaMode: boolean = false
 ) {
   const hasApiKey = typeof process !== 'undefined' && !!process.env.API_KEY;
-  const labibaKeywords = ["i am labiba", "moi labiba", "labiba nushan", "it's labiba", "queen labiba"];
+  const labibaKeywords = [
+    "i am labiba", 
+    "moi labiba", 
+    "labiba nushan", 
+    "it's labiba", 
+    "queen labiba", 
+    "i'm labiba",
+    "labiba name",
+    "name is labiba"
+  ];
+  
+  // Update labiba status based on current input
   const isNowLabiba = isLabibaMode || labibaKeywords.some(k => message.toLowerCase().includes(k));
 
   if (!hasApiKey) {
@@ -20,9 +31,10 @@ export const streamWithAI = async function* (
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   let instruction = isNowLabiba ? LABIBA_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
 
+  // Use a shallow history to keep tokens high but personality sharp
   const contents: any[] = history
     .filter(h => h.role === 'user' || h.role === 'model')
-    .slice(-10)
+    .slice(-8)
     .map(h => ({
       role: h.role,
       parts: [{ text: h.parts[0].text }]
@@ -32,15 +44,15 @@ export const streamWithAI = async function* (
 
   try {
     const streamResponse = await ai.models.generateContentStream({
-      // Using gemini-flash-lite-latest as it offers the highest rate limits 
-      // and is most suitable for free-tier/credit-sensitive hosting.
-      model: "gemini-flash-lite-latest", 
+      model: "gemini-3-flash-preview", 
       contents: contents,
       config: {
         systemInstruction: instruction,
-        temperature: isNowLabiba ? 0.7 : 0.9,
+        temperature: isNowLabiba ? 0.7 : 1.0, // More temperature for more "savage" randomness
         topP: 0.95,
+        // Optional search grounding if the model thinks it needs current context for a roast
         tools: [{ googleSearch: {} }],
+        thinkingConfig: { thinkingBudget: 0 } // No thinking needed for raw speed and insults
       },
     });
 
