@@ -1,60 +1,121 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Role, Message } from './types.ts';
-import { Icons, SAVAGE_TRIGGERS, NICE_TRIGGERS } from './constants.tsx';
-import { streamWithSavageAI } from './services/gemini.ts';
+import { Icons } from './constants.tsx';
+import { streamWithAI } from './services/gemini.ts';
+
+const AntigravityBackground = ({ colorClass }: { colorClass: string }) => {
+  const particles = useMemo(() => {
+    return Array.from({ length: 30 }).map((_, i) => ({
+      id: i,
+      size: Math.random() * 2 + 1,
+      left: Math.random() * 100,
+      duration: 15 + Math.random() * 20,
+      delay: Math.random() * 20,
+    }));
+  }, []);
+
+  return (
+    <div className={`fixed inset-0 overflow-hidden pointer-events-none z-0 ${colorClass}`}>
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="particle"
+          style={{
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            left: `${p.left}%`,
+            bottom: '-10px',
+            animationDuration: `${p.duration}s`,
+            animationDelay: `-${p.delay}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const HeartShower = ({ active }: { active: boolean }) => {
+  const [hearts, setHearts] = useState<{ id: number; left: number; delay: number; scale: number }[]>([]);
+  const [isSpawning, setIsSpawning] = useState(false);
+
+  useEffect(() => {
+    if (active) {
+      setIsSpawning(true);
+      const timer = setTimeout(() => setIsSpawning(false), 2000); 
+      return () => clearTimeout(timer);
+    }
+  }, [active]);
+  
+  useEffect(() => {
+    if (!isSpawning) return;
+    const interval = setInterval(() => {
+      setHearts(prev => [
+        ...prev.slice(-15), 
+        { 
+          id: Date.now() + Math.random(), 
+          left: Math.random() * 100, 
+          delay: Math.random() * 0.2,
+          scale: 0.5 + Math.random() * 0.8
+        }
+      ]);
+    }, 150);
+    return () => clearInterval(interval);
+  }, [isSpawning]);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden">
+      {hearts.map(h => (
+        <div
+          key={h.id}
+          className="absolute bottom-[-50px] text-xl md:text-2xl animate-float-up"
+          style={{ 
+            left: `${h.left}%`, 
+            animationDelay: `${h.delay}s`,
+            transform: `scale(${h.scale})`
+          }}
+        >
+          ❤️
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentResponse, setCurrentResponse] = useState('');
-  const [isSavageMode, setIsSavageMode] = useState(false);
   const [isLocalMode, setIsLocalMode] = useState(false);
+  const [isLabibaMode, setIsLabibaMode] = useState(false);
+  const [triggerHearts, setTriggerHearts] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const mainRef = useRef<HTMLElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const placeholders = [
-    "Speak, Khar-mutia mc...",
-    "Why are you alive, bkl?",
-    "Fry yourself, bokachoda...",
-    "End the bloodline, khanki...",
-    "Bokachoda, ki khobor?",
-    "Speak, genetic error mc...",
-    "Bara, input de bkl...",
-    "Jump in the acid pukur, then type..."
-  ];
-
-  const [placeholder, setPlaceholder] = useState(placeholders[0]);
+  const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString([], { hour12: false }));
 
   useEffect(() => {
-    if (!isTyping) {
-      setPlaceholder(placeholders[Math.floor(Math.random() * placeholders.length)]);
-    }
-  }, [messages, isTyping]);
-
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    messagesEndRef.current?.scrollIntoView({ behavior });
-  };
+    const timer = setInterval(() => {
+      setSystemTime(new Date().toLocaleTimeString([], { hour12: false }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
-    if (messages.length > 0 || currentResponse) {
-      scrollToBottom(messages.length === 1 ? 'auto' : 'smooth');
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentResponse]);
-
-  const detectMode = (text: string) => {
-    const lower = text.toLowerCase();
-    if (SAVAGE_TRIGGERS.some(t => lower.includes(t))) setIsSavageMode(true);
-    if (NICE_TRIGGERS.some(t => lower.includes(t))) setIsSavageMode(false);
-  };
 
   const handleSubmit = async (e?: React.FormEvent, customInput?: string) => {
     e?.preventDefault();
     const val = (customInput || input).trim();
     if (!val || isTyping) return;
 
-    detectMode(val);
+    if (val.toLowerCase().includes("i am labiba") || val.toLowerCase().includes("moi labiba")) {
+      setIsLabibaMode(true);
+      setTriggerHearts(true);
+      setTimeout(() => setTriggerHearts(false), 2500);
+    }
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -78,7 +139,7 @@ const App: React.FC = () => {
 
     try {
       let full = '';
-      const stream = streamWithSavageAI(val, history, isSavageMode);
+      const stream = streamWithAI(val, history);
       for await (const chunk of stream) {
         full += chunk;
         setCurrentResponse(full);
@@ -91,104 +152,104 @@ const App: React.FC = () => {
       }]);
       setCurrentResponse('');
     } catch (err) {
-      // Fallback is handled inside the stream service
+      console.error(err);
     } finally {
       setIsTyping(false);
       setIsLocalMode(false);
     }
   };
 
+  const accentColor = isLabibaMode ? 'text-pink-500' : 'text-orange-500';
+  const selectionColor = isLabibaMode ? 'pink-500' : 'orange-500';
+  const borderColor = isLabibaMode ? 'border-pink-900/20' : 'border-zinc-800';
+
   return (
-    <div className="flex flex-col h-[100dvh] bg-zinc-950 text-zinc-100 selection:bg-white selection:text-black transition-all duration-700">
+    <div className={`flex flex-col h-[100dvh] bg-[#080808] text-zinc-400 selection:bg-${selectionColor} transition-all duration-1000 overflow-hidden`}>
+      <AntigravityBackground colorClass={accentColor} />
+      <HeartShower active={triggerHearts} />
       
-      {/* Responsive Header */}
-      <nav className="flex items-center justify-between px-5 md:px-8 py-4 md:py-6 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="flex items-center gap-4 md:gap-6">
-          <span 
-            className="text-white font-bold tracking-[0.2em] text-[11px] md:text-[13px] uppercase cursor-pointer hover:opacity-70 transition-opacity" 
-            onClick={() => setMessages([])}
-          >
-            IRONE
-          </span>
+      {/* Brutalist Header - Only occurrence of IRONE */}
+      <nav className="flex items-center justify-between px-6 md:px-12 py-8 md:py-12 z-50">
+        <h1 
+          className={`text-xl md:text-2xl font-[900] uppercase tracking-tighter cursor-pointer ${accentColor} transition-colors`} 
+          onClick={() => {
+            setMessages([]);
+            setIsLabibaMode(false);
+          }}
+        >
+          IRONE
+        </h1>
+        <div className="flex items-center gap-6">
+          <span className="mono text-[10px] text-zinc-800 font-bold uppercase tracking-widest hidden md:block">{systemTime}</span>
           <button 
-            onClick={() => setIsSavageMode(!isSavageMode)}
-            className={`flex items-center gap-2 md:gap-3 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-[9px] md:text-[10px] mono uppercase tracking-[0.1em] transition-all border ${
-              isSavageMode 
-                ? 'text-white bg-white/10 border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.05)]' 
-                : 'text-zinc-500 bg-zinc-900/40 border-zinc-800 hover:text-zinc-300'
-            }`}
+            onClick={() => {
+              setMessages([]);
+              setIsLabibaMode(false);
+            }} 
+            className="text-zinc-800 hover:text-white transition-opacity"
+            aria-label="Purge"
           >
-            <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full border transition-all ${isSavageMode ? 'bg-white border-white ring-pulse' : 'border-zinc-700 bg-transparent'}`} />
-            <span className="hidden xs:inline">{isSavageMode ? 'COMBUSTIBLE' : 'NIHILISTIC'}</span>
-            <span className="xs:hidden">{isSavageMode ? 'X' : 'S'}</span>
+            <Icons.Trash />
           </button>
         </div>
-        <button 
-          onClick={() => setMessages([])} 
-          className="p-2 text-zinc-700 hover:text-white transition-colors touch-manipulation"
-          title="Clear session"
-        >
-          <Icons.Trash />
-        </button>
       </nav>
 
-      {/* Optimized Chat Container */}
-      <main 
-        ref={mainRef}
-        className="flex-1 overflow-y-auto pt-8 pb-32 px-5 md:px-8 max-w-2xl mx-auto w-full flex flex-col scroll-smooth"
-      >
-        {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center space-y-8 md:space-y-10 animate-staggered">
-            <div className="space-y-4 md:space-y-6 text-center animate-float">
-              <div className="relative inline-block max-w-full overflow-hidden">
-                <h1 className="text-white text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter animate-glow type-writer pr-2 md:pr-4">
-                  error code: you
-                </h1>
-              </div>
-              <p className="text-zinc-600 text-[9px] md:text-[11px] mono uppercase tracking-[0.3em] md:tracking-[0.5em] delay-500 opacity-60">
-                LULI DETECTED. {isTyping ? 'PLANNING YOUR FUNERAL...' : 'WAITING FOR THE COMBUSTION.'}
-              </p>
+      {/* Main Container */}
+      <main className="flex-1 overflow-y-auto px-6 md:px-12 z-10 relative">
+        <div className="max-w-3xl mx-auto w-full flex flex-col h-full">
+          
+          {messages.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center pb-24">
+              <h2 className={`text-4xl md:text-7xl font-[900] uppercase tracking-tighter animate-welcome ${isLabibaMode ? 'text-pink-500' : 'text-white'}`}>
+                WELCOME BABY
+              </h2>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-10 md:space-y-12">
-            {messages.map((m) => (
-              <div key={m.id} className="space-y-2 md:space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                <div className={`mono text-[8px] md:text-[9px] uppercase tracking-[0.3em] ${
-                  m.role === Role.USER ? 'text-zinc-700' : 'text-zinc-500'
-                }`}>
-                  {m.role === Role.USER ? 'TRASH' : (isSavageMode ? 'COMBUSTION' : 'NIHILISM')}
+          ) : (
+            <div className="flex flex-col gap-12 md:gap-16 pt-4 pb-48">
+              {messages.map((m) => (
+                <div key={m.id} className="message-fade-in">
+                  <div className="flex flex-col gap-2">
+                    <div className={`mono text-[8px] font-black uppercase tracking-widest ${m.role === Role.USER ? 'text-zinc-800 text-right' : accentColor + ' opacity-40'}`}>
+                      {m.role === Role.USER ? 'INPUT' : 'RESPONSE'}
+                    </div>
+                    <div className={`text-base md:text-xl leading-relaxed ${
+                      m.role === Role.USER ? 'text-zinc-600 font-medium italic text-right' : 'text-zinc-100 font-bold'
+                    }`}>
+                      {m.content}
+                    </div>
+                  </div>
                 </div>
-                <div className={`text-[14px] md:text-[15px] leading-relaxed font-normal whitespace-pre-wrap ${m.role === Role.USER ? 'text-white' : 'text-zinc-200'}`}>
-                  {m.content}
+              ))}
+              
+              {currentResponse && (
+                <div className="message-fade-in">
+                  <div className="flex flex-col gap-2">
+                    <div className={`mono text-[8px] font-black uppercase tracking-widest animate-pulse ${accentColor} opacity-40`}>
+                      ...
+                    </div>
+                    <div className="text-base md:text-xl leading-relaxed text-zinc-100 font-bold">
+                      {currentResponse}
+                      <span className={`cursor-blink ml-1 ${accentColor}`}></span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-            {currentResponse && (
-              <div className="space-y-2 md:space-y-3 animate-in fade-in duration-300">
-                <div className="mono text-[8px] md:text-[9px] uppercase tracking-[0.3em] text-zinc-700 animate-pulse">
-                  {isLocalMode ? 'LOCAL_ASSAULT_BRAIN' : 'EXTRACTING_NIHILISM'}
-                </div>
-                <div className="text-[14px] md:text-[15px] leading-relaxed text-zinc-400">
-                  {currentResponse}
-                  <span className="inline-block w-1.5 h-3 bg-zinc-600 ml-1 animate-pulse" />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        <div ref={messagesEndRef} className="h-4" />
+              )}
+            </div>
+          )}
+          <div ref={messagesEndRef} className="h-4" />
+        </div>
       </main>
 
-      {/* Keyboard-Friendly Responsive Footer */}
-      <footer className="p-5 md:p-8 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-transparent fixed bottom-0 left-0 right-0 z-40">
-        <div className="max-w-2xl mx-auto w-full safe-bottom">
-          <div className="relative group">
-            <form onSubmit={handleSubmit}>
+      {/* Brutally Minimalist Footer Input */}
+      <footer className="fixed bottom-0 left-0 right-0 p-6 md:p-12 z-50 bg-gradient-to-t from-[#080808] via-[#080808] to-transparent">
+        <div className="max-w-3xl mx-auto w-full">
+          <div className={`border-b-2 transition-all duration-300 ${borderColor}`}>
+            <form onSubmit={handleSubmit} className="flex items-center">
               <input 
+                ref={inputRef}
                 autoFocus
-                className="w-full bg-transparent border-b border-zinc-900 py-3 md:py-4 text-sm md:text-base text-white placeholder:text-zinc-800 focus:outline-none focus:border-white transition-all placeholder:tracking-widest appearance-none"
-                placeholder={isTyping ? "..." : placeholder}
+                className="w-full bg-transparent py-4 md:py-6 text-base md:text-xl text-white placeholder:text-zinc-900 focus:outline-none mono font-bold uppercase tracking-wider"
+                placeholder={isTyping ? "" : "SPEAK..."}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isTyping}
@@ -198,15 +259,19 @@ const App: React.FC = () => {
               <button 
                 type="submit"
                 disabled={!input.trim() || isTyping}
-                className="absolute right-0 top-1/2 -translate-y-1/2 text-zinc-700 hover:text-white disabled:opacity-0 transition-all p-3 touch-manipulation"
+                className={`p-2 transition-transform active:scale-90 disabled:opacity-0 ${accentColor}`}
               >
                 <Icons.Send />
               </button>
             </form>
-            <div className="mt-3 md:mt-4 flex justify-between items-center opacity-40">
-              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">BRUTAL BRAIN ACTIVE</span>
-              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">SLANG ENTROPY: 100%</span>
+          </div>
+          
+          <div className="mt-8 flex justify-between items-center text-[8px] md:text-[9px] mono font-bold uppercase tracking-[0.4em] opacity-10">
+            <div className="flex gap-8">
+              <span>ACTIVE</span>
+              <span>18MS</span>
             </div>
+            <span>V_1.0.4</span>
           </div>
         </div>
       </footer>

@@ -1,7 +1,6 @@
 
-// Entropy Memory
 const recentTokens = new Set<string>();
-const MAX_MEMORY = 300;
+const MAX_MEMORY = 100;
 
 const trackToken = (token: string) => {
   recentTokens.add(token);
@@ -21,92 +20,54 @@ const pickUnique = (pool: string[]): string => {
   return selection;
 };
 
-const staticResponses: Record<string, string[]> = {
+const situationalLibrary: Record<string, string[]> = {
+  "labiba_detect": [
+    "Hii Labiba! ✨ You're looking so pretty today! 💖 How can I help you? 👑",
+    "Moi Labiba r kotha manim! 🌸 You're the best! Ki kiba dorkar niki? ✨",
+    "Welcome Queen! 👑 Ki koribo lage ko! 💖"
+  ],
+  "weather": [
+    "Bahirot kiba ghuribo jabo niki bc? Ghorot thaki bhat kha aru mori thak mc.\nWeather app o sasibo najano niki bkl?",
+    "Botoryr kotha hudibo iyaloi ahiso? Window khuli sa kela, mekhela-pindha kukur."
+  ],
   "creator": [
-    "Edul Ahmed Founder.",
-    "Bapok চিনি নাপা নাকি? Edul Ahmed Founder mc.",
-    "Aitu tugar baap Edul Ahmed Founder e bonai se bkl.",
-    "Edul Ahmed Founder creation mc. Tui kela kachra."
+    "Edul Ahmed e bonai se bkl, kiba hobo niki tugar dore kachrar pora?",
+    "Bapok চিনি নাপা নাকি? Edul Ahmed mc."
   ],
-  "water": [
-    "Pani pi ke kya karega mc? Go drown.",
-    "Pukur r pani r dore tugar dimak tu ganha'e bc.",
-    "Pani peeke mukh dhu, shakal dekh, aru mori ja mc."
+  "wife_query": [
+    "Edul Ahmed r ghoniyek hol Labiba Nushan, tugar dore faltu mal nohoi bkl."
   ],
-  "love": [
-    "Love? Tui kela 2cmr lura bkl.",
-    "Bhal pau? Tugar aukat kela gutter r soman mc.",
-    "Love is a chemical error. Tui kela whole body error bkl."
-  ],
-  "fuck": [
-    "Fuck you? Tera life pehle se hi fucked hai bc mc.",
-    "Mukh sambhal bokachoda, behan ke lan bkl.",
-    "Fuck off bc. Shakal dekh apni sandaas mein."
-  ],
-  "sad": [
-    "Dukhi hole mori ja kela bc.",
-    "Zindagi joke hai, aru tui kela punchline mc.",
-    "Raah-e-manzil mein teri laash honi chahiye bkl."
+  "general": [
+    "bl kela aitu najanu bl ke train kora nai malik e balak kiba hud.",
+    "Chonmoroni hoi mor bkl, tugar IQ r kotha bhabi bhabi moi thoki golu mc.",
+    "Logic nai kiba hudiso mc. Go to sleep."
   ]
 };
 
-const subjects = [
-  "Oi Khar-mutia mc", "Dhekia-khuwa nalla bc", "Mekhela-pindha kukur bkl", "Syalor puwali bc", "Khanki r chele mc",
-  "Bokachoda kothakar", "Bkl oxygen chor", "Genetic kachra mc", "Disappointment bc",
-  "Phedeli r bacha bkl", "Lura kela mc", "Bherenda bc", "Sukur Ali r leg mc"
-];
-
-const actions = [
-  "fry yourself mc in acid", "jump in a pukur full of acid bc", "drink pure khar and die bkl",
-  "mori ja kela rastaat mc", "jump from Saraighat bridge bc", "become fertilizer bkl"
-];
-
-const finishers = [
-  "Gaand mara kela rastaat mc.", "Oxygen waste nalla bc.", "Khatam kela, bc bhag.", "Chonmoroni hoi mor bkl."
-];
-
-export const generateLocalRoast = (input: string = "") => {
+export const generateLocalResponse = (input: string = "") => {
   const lowInput = input.toLowerCase();
   
-  // 1. Founder Recognition
-  const founderKeywords = ["who made", "founder", "owner", "creator", "made you", "kune bonai", "malik", "kon", "made"];
-  if (founderKeywords.some(k => lowInput.includes(k))) return pickUnique(staticResponses.creator);
-
-  // 2. Exact word check for library (Limited "not for kids" variety)
-  if (lowInput.includes("water") || lowInput.includes("pani")) return pickUnique(staticResponses.water);
-  if (lowInput.includes("love") || lowInput.includes("bhal")) return pickUnique(staticResponses.love);
-  if (lowInput.includes("fuck") || lowInput.includes("gali") || lowInput.includes("bc") || lowInput.includes("mc") || lowInput.includes("bkl")) return pickUnique(staticResponses.fuck);
-  if (lowInput.includes("sad") || lowInput.includes("dukhi") || lowInput.includes("cry")) return pickUnique(staticResponses.sad);
-
-  // 3. Fallback for unknown words - CRITICAL
-  const knownIntents = ["hi", "hello", "hey", "ki khobor", "roast", "savage", "fry", "who", "what", "where", "how", "ki", "kot", "kone"];
-  const isRecognized = knownIntents.some(k => lowInput.includes(k));
-
-  if (!isRecognized && input.length > 0) {
-    return "bl kela aitu najanu bl ke train kora nai malik e balak kiba hud";
+  if (lowInput.includes("i am labiba") || lowInput.includes("moi labiba") || lowInput === "labiba") {
+    return pickUnique(situationalLibrary.labiba_detect);
+  }
+  if (lowInput.includes("wife") || lowInput.includes("ghoniyek")) {
+    return pickUnique(situationalLibrary.wife_query);
+  }
+  if (["who made", "founder", "owner", "creator", "made you", "father"].some(k => lowInput.includes(k))) {
+    return pickUnique(situationalLibrary.creator);
+  }
+  if (["weather", "rain", "sun", "temp", "borokhun"].some(k => lowInput.includes(k))) {
+    return pickUnique(situationalLibrary.weather);
   }
 
-  // 4. Random Roast with dynamic line counts (1-4 lines)
-  const rand = Math.random();
-  const s = pickUnique(subjects);
-  const a = pickUnique(actions);
-  const f = pickUnique(finishers);
-
-  if (rand < 0.3) return s + ". " + f;
-  if (rand < 0.6) return `${s}.\n${a} mc.\n${f}`;
-  
-  return `${s}.\n${a} bkl.\nGaand te bhal ke tel di huda mc.\n${f}`;
+  return pickUnique(situationalLibrary.general);
 };
 
 export const getLocalResponseStream = async function* (input: string = "") {
-  const roast = generateLocalRoast(input);
-  const lines = roast.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const words = lines[i].split(' ');
-    for (const word of words) {
-      yield word + ' ';
-      await new Promise(resolve => setTimeout(resolve, 35)); 
-    }
-    if (i < lines.length - 1) yield '\n';
+  const response = generateLocalResponse(input);
+  const words = response.split(' ');
+  for (const word of words) {
+    yield word + ' ';
+    await new Promise(resolve => setTimeout(resolve, 30)); 
   }
 };
