@@ -1,4 +1,26 @@
 
+// Memory to track used tokens across turns to prevent repetition
+const recentTokens = new Set<string>();
+const MAX_MEMORY = 150;
+
+const trackToken = (token: string) => {
+  recentTokens.add(token);
+  if (recentTokens.size > MAX_MEMORY) {
+    const first = recentTokens.values().next().value;
+    if (first) recentTokens.delete(first);
+  }
+};
+
+const pickUnique = (pool: string[]): string => {
+  const available = pool.filter(t => !recentTokens.has(t));
+  const selection = available.length > 0 
+    ? available[Math.floor(Math.random() * available.length)] 
+    : pool[Math.floor(Math.random() * pool.length)];
+  
+  trackToken(selection);
+  return selection;
+};
+
 const subjects = [
   "Oi 2cmr", "Kukur puwali", "Luli kela", "Sukur Ali", "Bokachoda", "Jhant er user", "Bara", "Gandu", "Chutiya", 
   "Abe oye", "Sun be khanki", "Ey kukur", "Oi bal", "Pukur er maach", "Behan ke lan", "Mc", "Bc", "Gadhera", 
@@ -8,7 +30,9 @@ const subjects = [
   "Bherenda", "Siali r bacha", "Jondh kela", "Chapri", "Nalla", "Bhikhari", "Gutter ki paidaish",
   "Namuna", "Aadhe dimak wala", "Dhekia khuwa", "Khar-mutia", "Bhutur baper", "Mekuri puwali",
   "Pagala kukur", "Lura", "Guri-kata", "Syalor ragi", "Bandoror koli", "Ullu ka pattha", "Chaman",
-  "Tharki luli", "Kachra manuh", "Dustbin or bhoot", "Kukuror leg", "Boka-hobo", "Harami luli"
+  "Tharki luli", "Kachra manuh", "Dustbin or bhoot", "Kukuror leg", "Boka-hobo", "Harami luli",
+  "Abe oye jhaantu", "Sadi hui macchli", "Pattal-chat", "Gutter ka keeda", "Dharti pe bojh",
+  "Nalayak kela", "Abe saale tatte", "Lallu", "Khopdi-phod", "Gobar dimak", "Baasi bhat", "Murgi chor"
 ];
 
 const actions = [
@@ -21,7 +45,9 @@ const actions = [
   "khar khai mukh tu dhu", "bihu nach kela", "gaon r rastaat douri thak", "mental hospital ot ja",
   "mekhela pindhi nach", "nale me jaake mar", "shakal dekh apni kela", "aukat me reh", "paisa nikal be",
   "motha tu gila kor", "syalor dore ragi mar", "baal dore sae thak", "dhol pitibo najana",
-  "khanki r dore kotha nokobi", "gaand mara kela", "pukur ot dub mar", "rastaat bhik mag", "jhant ukali thak"
+  "khanki r dore kotha nokobi", "gaand mara kela", "pukur ot dub mar", "rastaat bhik mag", "jhant ukali thak",
+  "apne baap ko mat sikha", "gutter me muh dal", "shakal pe thuk dunga", "dimak ka dahi mat kar",
+  "luli kat ke pukur me phenk dunga", "bihu toli me nanga hoke nach", "kela dimorru nikal"
 ];
 
 const objects = [
@@ -31,7 +57,8 @@ const objects = [
   "Paltan Bazar r kachrot", "Dhubri r pukhuri t", "Brahmaputra r dharot", "Tamul r guri t",
   "Nale ke paas", "Kachre ke dibbe me", "Sandaas me", "Sadak pe", "Bhoot r banglow t",
   "Mokha kharap r logot", "Kukuror bhura t", "Gutter r pani t", "Bathroom or goli t",
-  "Bajar r majot", "Police thant", "Hospital or bed ot", "Mental case r logot"
+  "Bajar r majot", "Police thant", "Hospital or bed ot", "Mental case r logot",
+  "Moriom r pukhuri t", "Kamakhya r rastaat", "Railway track pe", "Sukur ali r gaand me"
 ];
 
 const finishers = [
@@ -41,37 +68,38 @@ const finishers = [
   "ar kiba kora.", "dimak lagau.", "zero logic kela.", "faltu kukur.", "savage luli power.", 
   "mar dabo kela.", "khatam kela.", "pukur or maach kha kela.", "go and die.", "nikal lavde.",
   "bal kela.", "jhant kela.", "bara.", "kela kela kela.", "saala nalla.", "bhikhari kothakar.",
-  "khub savage hoi aso?", "luli katim kela.", "gaand fati jabo.", "bhag rasta't.", "mental kela."
+  "khub savage hoi aso?", "luli katim kela.", "gaand fati jabo.", "bhag rasta't.", "mental kela.",
+  "thook laga ke kela.", "aukat dikha di kela.", "baap aya kela."
 ];
 
 const shayariOpeners = [
-  "Arz kiya hai, duniya mein gham hai...",
-  "Dil toota hai tumhara, aankhon mein paani...",
-  "Tanhayi ka aalam hai, raat hai bhari...",
-  "Dard-e-dil ki dastaan kya sunayein...",
-  "Log kehte hain ishq mein maza hai...",
-  "Zindagi ek dhoka hai, sab ne jana hai...",
-  "Aasman mein taare, zameen pe andhera...",
-  "Waqt ne kiya kya haseen sitam...",
-  "Bikhre hue sapne, toota hua dil...",
-  "Shayar bante hain log dard-e-dil se...",
-  "Tanhayi ki raahon mein bhatak raha hoon...",
-  "Maut ka intezaar hai is dil ko..."
+  "Wo muqaddar ki lakeeron mein tera naam dhoondte rahe...",
+  "Dil ke chirag mein ab tel nahin bacha hai...",
+  "Is veerane mein koi kiske liye ruke...",
+  "Raah-e-manzil mein kaante to bahut the...",
+  "Humne to dil diya tha unhe phool samajh kar...",
+  "Aasman se gira ek sitara jab zameen se takraya...",
+  "Tanhayi ki dastan ab kise sunayein hum...",
+  "Zindagi ke safar mein humsafar dhoondte rahe...",
+  "Wo dard hi kya jo aankhon se na chhalke...",
+  "Khwabon ki duniya mein ghar banaya tha humne...",
+  "Waqt ki raftar ne sab kuch badal diya...",
+  "Mohabbat ke bazaar mein hum khud ko bech aaye..."
 ];
 
 const shayariPunchlines = [
-  "Par tu kela pure 2cmr luli hai.",
-  "Tumar gaand ot kela pukur marim kela.",
-  "Saala kukuror puwali, dustbin ot goi mor.",
-  "Tugar logic tu kela jhant er soman.",
-  "Go and cry in the gutter, nalla kothakar.",
-  "Behan ke lan, rona band kor kukur puwali.",
-  "Bapok koba niki tumar luli tu 2cmr hoi gol?",
-  "Zindagi joke hai, aur tui kela biggest joke.",
-  "Shayari sunega? Gaand mara kela.",
-  "Pukur or maach r logot goi bhal pau ko kela.",
-  "Mental hospital r rasta tu huda niki kela?",
-  "Bara kela, tugar mukh tu saala sukur ali."
+  "Par kela tumar mukh tu gutter r dore ganha'e kela.",
+  "Kyuki tui kela 2cmr luli r dore pori aso rasta't.",
+  "Saala sukur ali r puwali, gaand mara kela.",
+  "Tugar bhal pua tu pukur r maach e khai gol kela.",
+  "Go and cry in the bathroom, bc mc kothakar.",
+  "Tumar soul tu kela kachre ke dibbe mein pada hai.",
+  "Shayari sunega? Pehle apna luli dho ke aa kela.",
+  "Zindagi joke hai, aur tui kela biggest nalla kela.",
+  "Bapok koba niki tumi pukur ot dub mariso kela?",
+  "Aukat tumhari gutter ki hai, baat soul ki karte ho kela.",
+  "Behan ke lan, rona band kor aur rasta't bhik mag kela.",
+  "Tugar dil tu kela bhikhari r khor soman kela."
 ];
 
 const staticResponses: Record<string, string[]> = {
@@ -130,28 +158,28 @@ export const generateLocalRoast = (input: string = "") => {
   const lowInput = input.toLowerCase();
   
   // Emotional / Sad Intent (The Shayari Engine)
-  const sadKeywords = ["sad", "dukhi", "cry", "rona", "upset", "alone", "broken", "dard", "depression", "feeling", "hurt"];
+  const sadKeywords = ["sad", "dukhi", "cry", "rona", "upset", "alone", "broken", "dard", "depression", "feeling", "hurt", "heart", "breakup"];
   if (sadKeywords.some(k => lowInput.includes(k))) {
-    const opener = shayariOpeners[Math.floor(Math.random() * shayariOpeners.length)];
-    const punch = shayariPunchlines[Math.floor(Math.random() * shayariPunchlines.length)];
+    const opener = pickUnique(shayariOpeners);
+    const punch = pickUnique(shayariPunchlines);
     return `${opener}\n\n${punch}`;
   }
 
-  // Intent detection
-  if (lowInput.includes("water") || lowInput.includes("pani")) return staticResponses.water[Math.floor(Math.random() * staticResponses.water.length)];
-  if (lowInput.includes("love") || lowInput.includes("bhal")) return staticResponses.love[Math.floor(Math.random() * staticResponses.love.length)];
-  if (lowInput.includes("fuck") || lowInput.includes("gali") || lowInput.includes("bc") || lowInput.includes("mc")) return staticResponses.fuck[Math.floor(Math.random() * staticResponses.fuck.length)];
-  if (lowInput.includes("who") || lowInput.includes("kon") || lowInput.includes("identity")) return staticResponses.who[Math.floor(Math.random() * staticResponses.who.length)];
-  if (lowInput.includes("hello") || lowInput.includes("hi")) return staticResponses.hello[Math.floor(Math.random() * staticResponses.hello.length)];
-  if (lowInput.includes("song") || lowInput.includes("sing") || lowInput.includes("gaana") || lowInput.includes("lyrics")) return staticResponses.song[Math.floor(Math.random() * staticResponses.song.length)];
-  if (lowInput.includes("joke") || lowInput.includes("funny") || lowInput.includes("hahaha")) return staticResponses.joke[Math.floor(Math.random() * staticResponses.joke.length)];
-  if (lowInput.includes("time") || lowInput.includes("homoi") || lowInput.includes("ghori")) return staticResponses.time[Math.floor(Math.random() * staticResponses.time.length)];
+  // Static intent detection
+  if (lowInput.includes("water") || lowInput.includes("pani")) return pickUnique(staticResponses.water);
+  if (lowInput.includes("love") || lowInput.includes("bhal")) return pickUnique(staticResponses.love);
+  if (lowInput.includes("fuck") || lowInput.includes("gali") || lowInput.includes("bc") || lowInput.includes("mc")) return pickUnique(staticResponses.fuck);
+  if (lowInput.includes("who") || lowInput.includes("kon") || lowInput.includes("identity")) return pickUnique(staticResponses.who);
+  if (lowInput.includes("hello") || lowInput.includes("hi")) return pickUnique(staticResponses.hello);
+  if (lowInput.includes("song") || lowInput.includes("sing") || lowInput.includes("gaana") || lowInput.includes("lyrics")) return pickUnique(staticResponses.song);
+  if (lowInput.includes("joke") || lowInput.includes("funny") || lowInput.includes("hahaha")) return pickUnique(staticResponses.joke);
+  if (lowInput.includes("time") || lowInput.includes("homoi") || lowInput.includes("ghori")) return pickUnique(staticResponses.time);
 
-  // High-variety Quadratic Random generator (Millions of unique combinations)
-  const s = subjects[Math.floor(Math.random() * subjects.length)];
-  const a = actions[Math.floor(Math.random() * actions.length)];
-  const o = objects[Math.floor(Math.random() * objects.length)];
-  const f = finishers[Math.floor(Math.random() * finishers.length)];
+  // High-variety Quadratic Random generator (Anti-repetition active)
+  const s = pickUnique(subjects);
+  const a = pickUnique(actions);
+  const o = pickUnique(objects);
+  const f = pickUnique(finishers);
   
   const templates = [
     `${s}, ${a} ${o} ${f}`,
