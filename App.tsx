@@ -6,7 +6,6 @@ import { streamWithAI } from './services/gemini.ts';
 
 const QUOTA_LIMIT = 20;
 const RESET_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
-const CYCLE_DURATION_MS = 15 * 60 * 1000; // 15 minutes loop
 
 const ShootingStars = ({ active }: { active: boolean }) => {
   const [stars, setStars] = useState<{ id: number; top: number; left: number; width: number }[]>([]);
@@ -253,9 +252,8 @@ const LabibaGlow = ({ active }: { active: boolean }) => {
   if (!active) return null;
   return (
     <div className="fixed inset-0 pointer-events-none z-[1] transition-opacity duration-1000">
-      <div className="absolute inset-0 bg-gradient-to-br from-pink-500/15 via-purple-500/5 to-transparent opacity-80" />
-      <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-pink-600/10 to-transparent" />
-      <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-pink-600/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-transparent opacity-40" />
+      <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-pink-900/10 to-transparent" />
     </div>
   );
 }
@@ -370,12 +368,25 @@ const App: React.FC = () => {
 
   const themeData = THEMES[currentTheme] || THEMES.fire;
   const accentColor = isLabibaMode ? 'text-pink-400' : themeData.accent;
-  const selectionColor = isLabibaMode ? 'pink-500' : themeData.accent.replace('text-', '');
-  const borderColor = isLabibaMode ? 'border-pink-900/50' : 'border-zinc-800';
   const isQuotaLocked = usage.count >= QUOTA_LIMIT && timeLeft !== null;
 
+  // Safe mapping for Tailwind background colors to avoid construction issues
+  const bgGradientColor = isLabibaMode ? 'from-[#050000]' : 
+    currentTheme === 'fire' ? 'from-[#050000]' :
+    currentTheme === 'moonlight' ? 'from-[#010208]' :
+    currentTheme === 'snow' ? 'from-[#0f172a]' :
+    'from-[#020617]';
+
+  const selectionColorClass = isLabibaMode ? 'selection:bg-pink-500' : 
+    currentTheme === 'fire' ? 'selection:bg-red-600' :
+    currentTheme === 'moonlight' ? 'selection:bg-blue-300' :
+    currentTheme === 'snow' ? 'selection:bg-blue-100' :
+    'selection:bg-cyan-400';
+
+  const borderColor = isLabibaMode ? 'border-pink-900/50' : 'border-zinc-800';
+
   return (
-    <div className={`flex flex-col h-[100dvh] w-full ${themeData.bg} text-zinc-400 selection:bg-${selectionColor} transition-all duration-1000 overflow-hidden relative`}>
+    <div className={`flex flex-col h-[100dvh] w-full ${themeData.bg} text-zinc-400 ${selectionColorClass} transition-all duration-1000 overflow-hidden relative`}>
       <AntigravityBackground theme={currentTheme} isLabiba={isLabibaMode} />
       <SkyCycle theme={currentTheme} />
       {(currentTheme === 'snow' || currentTheme === 'water' || currentTheme === 'moonlight') && <ForestPath theme={currentTheme} />}
@@ -429,7 +440,7 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <footer className={`fixed bottom-0 left-0 right-0 p-4 sm:p-6 md:p-12 z-[150] bg-gradient-to-t from-${themeData.bg.replace('bg-', '')} via-${themeData.bg.replace('bg-', '')} to-transparent`}>
+      <footer className={`fixed bottom-0 left-0 right-0 p-4 sm:p-6 md:p-12 z-[150] bg-gradient-to-t ${bgGradientColor} to-transparent`}>
         <div className="max-w-3xl mx-auto w-full">
           <div className={`border-b-2 transition-all duration-300 relative ${borderColor} ${isQuotaLocked ? 'opacity-20 pointer-events-none' : ''}`}>
             <form onSubmit={handleSubmit} className="flex items-center">
@@ -461,7 +472,6 @@ const App: React.FC = () => {
               </div>
             </div>
           </div>
-          {/* iOS Safari Home Indicator Spacing */}
           <div className="h-safe-bottom sm:h-0" />
         </div>
       </footer>
