@@ -32,7 +32,9 @@ export const streamWithAI = async function* (
 
   try {
     const streamResponse = await ai.models.generateContentStream({
-      model: "gemini-3-flash-preview", 
+      // Using gemini-flash-lite-latest as it offers the highest rate limits 
+      // and is most suitable for free-tier/credit-sensitive hosting.
+      model: "gemini-flash-lite-latest", 
       contents: contents,
       config: {
         systemInstruction: instruction,
