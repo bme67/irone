@@ -15,14 +15,14 @@ const App: React.FC = () => {
   const mainRef = useRef<HTMLElement>(null);
 
   const placeholders = [
-    "Speak, 2cmr luli...",
-    "Ki koba, kukur puwali?",
-    "Pukur marim kela, likh...",
-    "Behan ke lan, speak up...",
+    "Speak, Khar-mutia mc...",
+    "Why are you alive, bkl?",
+    "Fry yourself, bokachoda...",
+    "End the bloodline, khanki...",
     "Bokachoda, ki khobor?",
-    "Mukh khul BC...",
-    "Bara, input de kela...",
-    "Jhant er user, speak..."
+    "Speak, genetic error mc...",
+    "Bara, input de bkl...",
+    "Jump in the acid pukur, then type..."
   ];
 
   const [placeholder, setPlaceholder] = useState(placeholders[0]);
@@ -68,7 +68,6 @@ const App: React.FC = () => {
     setIsTyping(true);
     setCurrentResponse('');
     
-    // Determine if we should use local mode based on environment or key existence
     const hasKey = typeof process !== 'undefined' && !!process.env.API_KEY;
     setIsLocalMode(!hasKey);
 
@@ -92,7 +91,7 @@ const App: React.FC = () => {
       }]);
       setCurrentResponse('');
     } catch (err) {
-      // Fallback is handled inside the stream service now
+      // Fallback is handled inside the stream service
     } finally {
       setIsTyping(false);
       setIsLocalMode(false);
@@ -120,7 +119,7 @@ const App: React.FC = () => {
             }`}
           >
             <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full border transition-all ${isSavageMode ? 'bg-white border-white ring-pulse' : 'border-zinc-700 bg-transparent'}`} />
-            <span className="hidden xs:inline">{isSavageMode ? 'UNFILTERED' : 'STANDARD'}</span>
+            <span className="hidden xs:inline">{isSavageMode ? 'COMBUSTIBLE' : 'NIHILISTIC'}</span>
             <span className="xs:hidden">{isSavageMode ? 'X' : 'S'}</span>
           </button>
         </div>
@@ -143,11 +142,11 @@ const App: React.FC = () => {
             <div className="space-y-4 md:space-y-6 text-center animate-float">
               <div className="relative inline-block max-w-full overflow-hidden">
                 <h1 className="text-white text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter animate-glow type-writer pr-2 md:pr-4">
-                  welcome baby
+                  error code: you
                 </h1>
               </div>
               <p className="text-zinc-600 text-[9px] md:text-[11px] mono uppercase tracking-[0.3em] md:tracking-[0.5em] delay-500 opacity-60">
-                SYSTEM ONLINE. {isTyping ? 'THINKING...' : 'WAITING FOR 2CMR.'}
+                LULI DETECTED. {isTyping ? 'PLANNING YOUR FUNERAL...' : 'WAITING FOR THE COMBUSTION.'}
               </p>
             </div>
           </div>
@@ -158,7 +157,7 @@ const App: React.FC = () => {
                 <div className={`mono text-[8px] md:text-[9px] uppercase tracking-[0.3em] ${
                   m.role === Role.USER ? 'text-zinc-700' : 'text-zinc-500'
                 }`}>
-                  {m.role === Role.USER ? 'USER' : (isSavageMode ? 'IRONE_X' : 'IRONE')}
+                  {m.role === Role.USER ? 'TRASH' : (isSavageMode ? 'COMBUSTION' : 'NIHILISM')}
                 </div>
                 <div className={`text-[14px] md:text-[15px] leading-relaxed font-normal whitespace-pre-wrap ${m.role === Role.USER ? 'text-white' : 'text-zinc-200'}`}>
                   {m.content}
@@ -168,7 +167,7 @@ const App: React.FC = () => {
             {currentResponse && (
               <div className="space-y-2 md:space-y-3 animate-in fade-in duration-300">
                 <div className="mono text-[8px] md:text-[9px] uppercase tracking-[0.3em] text-zinc-700 animate-pulse">
-                  {isLocalMode ? 'LOCAL_BRAIN_THINKING' : 'EXTRACTING'}
+                  {isLocalMode ? 'LOCAL_ASSAULT_BRAIN' : 'EXTRACTING_NIHILISM'}
                 </div>
                 <div className="text-[14px] md:text-[15px] leading-relaxed text-zinc-400">
                   {currentResponse}
@@ -205,8 +204,8 @@ const App: React.FC = () => {
               </button>
             </form>
             <div className="mt-3 md:mt-4 flex justify-between items-center opacity-40">
-              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">OFFLINE BRAIN ACTIVE</span>
-              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">POETIC HARASSMENT ENABLED</span>
+              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">BRUTAL BRAIN ACTIVE</span>
+              <span className="text-[7px] md:text-[8px] mono uppercase tracking-widest text-zinc-600">SLANG ENTROPY: 100%</span>
             </div>
           </div>
         </div>
