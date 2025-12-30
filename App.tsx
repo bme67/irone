@@ -370,7 +370,6 @@ const App: React.FC = () => {
   const accentColor = isLabibaMode ? 'text-pink-400' : themeData.accent;
   const isQuotaLocked = usage.count >= QUOTA_LIMIT && timeLeft !== null;
 
-  // Safe mapping for Tailwind background colors to avoid construction issues
   const bgGradientColor = isLabibaMode ? 'from-[#050000]' : 
     currentTheme === 'fire' ? 'from-[#050000]' :
     currentTheme === 'moonlight' ? 'from-[#010208]' :
@@ -409,9 +408,7 @@ const App: React.FC = () => {
         <div className="max-w-3xl mx-auto w-full flex flex-col h-full">
           {messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center pb-12 sm:pb-24">
-              <h2 className={`text-4xl sm:text-6xl md:text-9xl font-stylish animate-welcome drop-shadow-[0_4px_30px_rgba(255,255,255,0.15)] ${isLabibaMode ? 'text-pink-400 opacity-100 drop-shadow-[0_0_25px_rgba(244,114,182,0.4)]' : 'text-zinc-100 opacity-70'} leading-tight`}>
-                {isLabibaMode ? 'Welcome Queen' : 'Welcome Baby'}
-              </h2>
+              {/* Preload message removed per user request. Displaying locked state only if necessary. */}
               {isQuotaLocked && <p className="mono text-[9px] sm:text-[11px] mt-6 sm:mt-8 text-orange-500 font-bold uppercase tracking-widest animate-pulse">SYSTEM_LOCKED: {timeLeft}</p>}
             </div>
           ) : (

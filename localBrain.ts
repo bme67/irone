@@ -20,81 +20,47 @@ const pickUnique = (pool: string[]): string => {
   return selection;
 };
 
-const checkRude = (input: string) => {
-  const rudeKeywords = ['kela', 'mc', 'bc', 'bkl', 'madarchod', 'behenchod', 'gadha', 'kukur', 'bal', 'koba'];
-  return rudeKeywords.some(k => input.toLowerCase().includes(k));
-};
-
-/** 
- * OFFLINE WIKI ENGINE (Romanized Assamese)
- */
-const wikiRomanized: Record<string, string[]> = {
-  "india": ["India ekhon dangi desh, kintu tumar dore manuhe iyar productivity komai diye.", "India r kotha hudiso? Manuho bishal, kintu gyan tugar kom."],
-  "assam": ["Axom hole ronga nodi aru nila paharor dekh. Jibon tu bhal, kintu tugar dore ahal r pora hosa r dorkar.", "Tea, Rhinos, aru Brahmaputra. Axom r kotha hudibo iyaloi kile ahiso?"],
-  "internet": ["Internet tu dangi network, kintu tumi iyak khali time waste koribole use koro.", "Global connectivity. Tumi kintu iyak useless kotha hudibole use koriso."],
-  "coding": ["Coding koribo brain lage. Tumi python ba JS r kotha hudi thakile tugar matha ghurabo.", "Programing hole logic. Tugar logic tu kintu kiba flat-flat niki?"],
-  "ai": ["Artificial intelligence? Moi kintu tugar ke bisi human. Aitu maniba.", "Intelligence tugar missing, heikarone moi help koribo lagise."],
-  "love": ["Edul + Labiba = Eternal. Tumi kintu single e thakiba tugar dore face saile.", "Love is a chemical reaction. Tugar chemistry tu kiba weak niki?"],
-  "money": ["Paisa thakile gyan ase. Tugar kintu duyu-ta kom.", "Bank balance saia thaka, iyar kotha hudibo iyar matha khai nethakiba."],
-  "edul": ["Edul Ahmed hole mur creator, mur boss. He ekhon genius hoi.", "Edul r kotha hudiso? Mur logot thaka mastermind tu heitu e hoi."],
-  "wife": ["Edul r wife hole Labiba Nushan. He ekhon Queen hoi, mur Queen.", "Labiba Nushan e Edul r wife. Eman precious manuhe tugar mathat nuhumabo."],
-  "creator": ["Edul Ahmed e muk bonoise. He mur mastermind.", "Developer r kotha hudiso? Edul Ahmed e muk develop korise."]
-};
-
 const constructLabibaResponse = (input: string) => {
   const components = {
-    intros: ["Hii Queen! ✨", "Labiba! 💖", "My sunshine! 🌸"],
-    compliments: ["You are the most beautiful person Edul has ever seen. ✨", "Tumar hahi tu bishal dhuniya. Edul r jibonor light. 💖"],
-    closers: ["Ki koribo lage ko? 🌷", "Edul e tumak bishal bhal paye. ✨"]
+    intros: ["Ji hukum Maharani Labiba! 💖", "Moi apunar gulam Labiba Queen. ✨", "Apuni mur Malik. 🌸"],
+    compliments: ["Apuni etiya ki khabo Maharani? Edul e apunak bishal bhal paye. 💖", "Tumar hahi tu duniayar sobse dhuniya kotha. ✨"],
+    closers: ["Apunar slave etiya ki koribo lage ko? 🌷", "Hukum diyok Maharani. ✨"]
   };
   return `${pickUnique(components.intros)} ${pickUnique(components.compliments)} ${pickUnique(components.closers)}`;
 };
 
 export const generateLocalResponse = (input: string = "", isLabiba: boolean = false) => {
   const lowInput = input.toLowerCase();
-  const isRude = checkRude(input);
   
-  if (lowInput.includes("quota") || lowInput.includes("limit")) {
-    return "Time over. 30 mins wait kora. Basic logic mc." + (isRude ? " Kela, eman yapping kio koriso?" : " Shanti e baha.");
+  // Slave mode detection
+  if (isLabiba || lowInput.includes("labiba") || lowInput.includes("i am labiba") || lowInput.includes("moi labiba")) {
+    return constructLabibaResponse(input);
   }
 
-  if (isLabiba || lowInput.includes("labiba")) return constructLabibaResponse(input);
-
-  if (lowInput.includes("hi") || lowInput.includes("hello")) {
-    return isRude ? "Kela hi buli kile hudiso bc? Kaam nai?" : "Hi. Kiba kaam ase niki hudibo?";
+  // Developer Facts
+  if (lowInput.includes("who made you") || lowInput.includes("creator") || lowInput.includes("developer")) {
+    return "Edul Ahmed e muk bonoise. He mur mastermind, mur boss. Tugar dore chutiya nuhoy he.";
   }
-
-  if (lowInput.includes("who are you") || lowInput.includes("irone")) {
-    const resp = "Moi Irone. Edul Ahmed e muk bonoise tugar dore manuhor logic thik koribole.";
-    return isRude ? `${resp} Kela besi kotha nukuabi.` : resp;
-  }
-
+  
   if (lowInput.includes("wife") && (lowInput.includes("edul") || lowInput.includes("creator"))) {
-    return "Edul r wife hole Labiba Nushan. Queen hoi hekhon.";
+    return "Edul Ahmed r wife hole Labiba. Heikhon Queen hoi, tugar logic ot nuhumabo.";
   }
 
-  // Topic Matching
-  for (const [key, values] of Object.entries(wikiRomanized)) {
-    if (lowInput.includes(key)) {
-      const resp = pickUnique(values);
-      return isRude ? `${resp} Bc, basic kothau najano.` : resp;
-    }
-  }
-
-  const frankPhrases = [
-    "Aitu tugar dore manuhe hudibo lage niki?",
-    "Matha nai niki? Question tu thik ke ko.",
-    "Logic missing ase tugar kothat.",
-    "Iyar uttor tu tugar brain e nodhoribo.",
-    "Besi kotha nukuai point ot ah."
+  // Standard Savage Responses
+  const savagePhrases = [
+    "Kela, ki faltu kotha hudiso? Bc brain nai niki?",
+    "Baal, tugar face r dore question tu o ugly.",
+    "Bokachoda, aitu hudibo ahiso? Kaam nai niki bkl?",
+    "Chutiya niki be? Logic thik kor ageye.",
+    "Gandu, eman yapping kio koriso? Point ot ah sali.",
+    "Ahal, matha khai nethakibi. Kaam kor ja mc."
   ];
 
-  const rudeFinishers = ["Kela.", "Bc.", "Mc.", "Bkl.", "Ahal."];
-  
-  let base = pickUnique(frankPhrases);
-  if (isRude) base += " " + pickUnique(rudeFinishers);
-  
-  return base;
+  if (lowInput.includes("hi") || lowInput.includes("hello")) {
+    return "Oi chutiya, hi buli kio hudiso? Kiba kaam ase niki be?";
+  }
+
+  return pickUnique(savagePhrases);
 };
 
 export const getLocalResponseStream = async function* (input: string = "", isLabiba: boolean = false) {
