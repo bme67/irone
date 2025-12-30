@@ -44,10 +44,11 @@ const situationalLibrary: Record<string, string[]> = {
   ]
 };
 
-export const generateLocalResponse = (input: string = "") => {
+export const generateLocalResponse = (input: string = "", isLabiba: boolean = false) => {
   const lowInput = input.toLowerCase();
   
-  if (lowInput.includes("i am labiba") || lowInput.includes("moi labiba") || lowInput === "labiba") {
+  // If persistent flag is set OR current input triggers it
+  if (isLabiba || lowInput.includes("i am labiba") || lowInput.includes("moi labiba") || lowInput === "labiba") {
     return pickUnique(situationalLibrary.labiba_detect);
   }
   if (lowInput.includes("wife") || lowInput.includes("ghoniyek")) {
@@ -63,8 +64,8 @@ export const generateLocalResponse = (input: string = "") => {
   return pickUnique(situationalLibrary.general);
 };
 
-export const getLocalResponseStream = async function* (input: string = "") {
-  const response = generateLocalResponse(input);
+export const getLocalResponseStream = async function* (input: string = "", isLabiba: boolean = false) {
+  const response = generateLocalResponse(input, isLabiba);
   const words = response.split(' ');
   for (const word of words) {
     yield word + ' ';

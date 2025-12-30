@@ -10,22 +10,23 @@ import { getLocalResponseStream } from "../localBrain.ts";
 export const streamWithAI = async function* (
   message: string,
   history: { role: string; parts: { text: string }[] }[] = [],
-  isConciseMode: boolean = false
+  isConciseMode: boolean = false,
+  isLabibaMode: boolean = false
 ) {
   const hasApiKey = typeof process !== 'undefined' && !!process.env.API_KEY;
   
+  // Detect if Labiba is newly identifying or was already identified
+  const isLabiba = isLabibaMode || 
+                   message.toLowerCase().includes("i am labiba") || 
+                   message.toLowerCase().includes("moi labiba");
+
   if (!hasApiKey) {
-    yield* getLocalResponseStream(message);
+    yield* getLocalResponseStream(message, isLabiba);
     return;
   }
 
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  // Detect if Labiba is talking or has been talking
-  const isLabiba = message.toLowerCase().includes("i am labiba") || 
-                   message.toLowerCase().includes("moi labiba") || 
-                   history.some(h => h.parts[0].text.toLowerCase().includes("i am labiba") || h.parts[0].text.toLowerCase().includes("moi labiba"));
-
   let instruction = isConciseMode ? CONCISE_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
   
   if (isLabiba) {
@@ -51,7 +52,7 @@ export const streamWithAI = async function* (
       contents: contents,
       config: {
         systemInstruction: instruction,
-        temperature: isLabiba ? 0.7 : 1.0, // High randomness for sarcasm, lower for sweetness
+        temperature: isLabiba ? 0.7 : 1.0, 
         topP: 0.95,
         maxOutputTokens: 250, 
         tools: [{ googleSearch: {} }],
@@ -68,11 +69,11 @@ export const streamWithAI = async function* (
     }
 
     if (!hasProducedText) {
-      yield* getLocalResponseStream(message);
+      yield* getLocalResponseStream(message, isLabiba);
     }
 
   } catch (error: any) {
     console.error("API Error - falling back to Local Brain:", error);
-    yield* getLocalResponseStream(message);
+    yield* getLocalResponseStream(message, isLabiba);
   }
 };
