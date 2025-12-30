@@ -4,195 +4,221 @@ import { Role, Message } from './types.ts';
 import { Icons, THEMES, ThemeType } from './constants.tsx';
 import { streamWithAI } from './services/gemini.ts';
 
-const Thunderstorm = ({ active }: { active: boolean }) => {
-  const [flash, setFlash] = useState(0); // 0 to 1 intensity
+const QUOTA_LIMIT = 20;
+const RESET_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
+const CYCLE_DURATION_MS = 15 * 60 * 1000; // 15 minutes loop
+
+const ShootingStars = ({ active }: { active: boolean }) => {
+  const [stars, setStars] = useState<{ id: number; top: number; left: number; width: number }[]>([]);
 
   useEffect(() => {
-    if (!active) return;
-    
-    let timeoutId: number;
-    const triggerLightning = () => {
-      // Create a sequence of flashes (double or triple strike)
-      const sequence = async () => {
-        // Strike 1
-        setFlash(0.4 + Math.random() * 0.4);
-        await new Promise(r => setTimeout(r, 50 + Math.random() * 100));
-        setFlash(0);
-        await new Promise(r => setTimeout(r, 30 + Math.random() * 50));
-        
-        // Strike 2 (often stronger)
-        setFlash(0.6 + Math.random() * 0.4);
-        await new Promise(r => setTimeout(r, 100 + Math.random() * 200));
-        setFlash(0);
-        
-        // Occasional Strike 3
-        if (Math.random() > 0.7) {
-          await new Promise(r => setTimeout(r, 50));
-          setFlash(0.3);
-          await new Promise(r => setTimeout(r, 50));
-          setFlash(0);
-        }
-      };
+    if (!active) {
+      setStars([]);
+      return;
+    }
 
-      sequence();
-      timeoutId = window.setTimeout(triggerLightning, 4000 + Math.random() * 10000);
+    const triggerStar = () => {
+      const id = Date.now();
+      const newStar = {
+        id,
+        top: Math.random() * 40,
+        left: 60 + Math.random() * 40,
+        width: 150 + Math.random() * 250,
+      };
+      setStars(prev => [...prev, newStar]);
+      
+      setTimeout(() => {
+        setStars(prev => prev.filter(s => s.id !== id));
+      }, 1200);
+
+      const nextDelay = 2000 + Math.random() * 8000;
+      return setTimeout(triggerStar, nextDelay);
     };
 
-    timeoutId = window.setTimeout(triggerLightning, 3000);
-    return () => clearTimeout(timeoutId);
+    const timerId = triggerStar();
+    return () => clearTimeout(timerId);
+  }, [active]);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-10 overflow-hidden">
+      {stars.map(star => (
+        <div 
+          key={star.id} 
+          className="shooting-star" 
+          style={{ top: `${star.top}%`, left: `${star.left}%`, width: `${star.width}px` }} 
+        />
+      ))}
+    </div>
+  );
+};
+
+const SkyCycle = ({ theme }: { theme: ThemeType }) => {
+  if (theme !== 'moonlight') return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#02040a] via-[#0a1128] to-[#000000] opacity-90" />
+      <div className="fixed top-[12%] left-[10%] w-36 h-36 md:w-64 md:h-64 rounded-full z-10 pointer-events-none transition-all duration-1000"
+        style={{
+          background: 'radial-gradient(circle at 30% 30%, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%)',
+          boxShadow: '0 0 100px 10px rgba(255, 255, 255, 0.2), inset -10px -10px 30px rgba(0,0,0,0.1)',
+          filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.4))'
+        }}
+      >
+        <div className="absolute inset-0 opacity-10 overflow-hidden rounded-full mix-blend-multiply">
+            <div className="absolute top-[20%] left-[25%] w-10 h-10 bg-slate-800 rounded-full blur-sm" />
+            <div className="absolute top-[55%] left-[40%] w-14 h-14 bg-slate-900 rounded-full blur-md" />
+            <div className="absolute top-[35%] left-[60%] w-8 h-8 bg-slate-800 rounded-full blur-sm" />
+        </div>
+      </div>
+      <div className="fixed top-[12%] left-[10%] w-36 h-36 md:w-64 md:h-64 rounded-full blur-[80px] bg-white/5 z-0 pointer-events-none" />
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 50%)' }} />
+      <ShootingStars active={true} />
+    </>
+  );
+};
+
+const PineTree = ({ x, scale, opacity }: { x: number; scale: number; opacity: number }) => (
+  <g transform={`translate(${x}, 800) scale(${scale}) translate(0, -400)`} opacity={opacity}>
+    <path d="M0,0 L-40,100 L-10,100 L-50,200 L-15,200 L-60,300 L60,300 L15,200 L50,200 L10,100 L40,100 Z" />
+    <rect x="-10" y="300" width="20" height="100" />
+  </g>
+);
+
+const ForestPath = ({ theme }: { theme: ThemeType }) => {
+  const isStorm = theme === 'water';
+  const isNight = theme === 'moonlight';
+  const isSnow = theme === 'snow';
+  const forestOpacity = isStorm ? '0.8' : (isNight ? '0.7' : '0.95');
+  const treeFill = isSnow ? '#050505' : 'black';
+
+  return (
+    <div className="fixed bottom-0 left-0 w-full h-[85dvh] z-0 pointer-events-none overflow-hidden">
+      <svg viewBox="0 0 1200 800" preserveAspectRatio="none" className="w-full h-full transition-all duration-1000">
+        <g fill={treeFill} style={{ opacity: forestOpacity }}>
+          <PineTree x={100} scale={0.8} opacity={0.3} />
+          <PineTree x={250} scale={1.2} opacity={0.6} />
+          <PineTree x={-50} scale={1.5} opacity={0.9} />
+          <PineTree x={900} scale={0.9} opacity={0.3} />
+          <PineTree x={1050} scale={1.3} opacity={0.6} />
+          <PineTree x={1200} scale={1.6} opacity={0.9} />
+        </g>
+        {isSnow && (
+          <path 
+            d="M0,800 Q300,750 600,780 T1200,760 L1200,800 L0,800 Z" 
+            fill="white" 
+            opacity="0.95"
+            className="transition-opacity duration-1000"
+          />
+        )}
+      </svg>
+    </div>
+  );
+};
+
+const Thunderstorm = ({ active }: { active: boolean }) => {
+  const [flash, setFlash] = useState(false);
+
+  useEffect(() => {
+    if (!active) {
+      setFlash(false);
+      return;
+    }
+
+    const triggerFlash = () => {
+      setFlash(true);
+      setTimeout(() => setFlash(false), 50 + Math.random() * 100);
+      
+      if (Math.random() > 0.7) {
+        setTimeout(() => {
+          setFlash(true);
+          setTimeout(() => setFlash(false), 50);
+        }, 150);
+      }
+
+      const nextDelay = 3000 + Math.random() * 7000;
+      return setTimeout(triggerFlash, nextDelay);
+    };
+
+    const timerId = triggerFlash();
+    return () => clearTimeout(timerId);
   }, [active]);
 
   if (!active) return null;
 
   return (
     <div 
-      className="fixed inset-0 z-[5] pointer-events-none transition-opacity duration-75 ease-out" 
-      style={{ 
-        backgroundColor: `rgba(255, 255, 255, ${flash})`,
-        opacity: flash > 0 ? 1 : 0 
-      }} 
+      className={`fixed inset-0 pointer-events-none z-20 transition-opacity duration-75 ${flash ? 'bg-white/10 opacity-100' : 'opacity-0'}`} 
     />
   );
 };
 
-const ForestPath = ({ theme }: { theme: ThemeType }) => {
-  const isStorm = theme === 'water';
-  const mistColor = isStorm ? 'rgb(22, 78, 99)' : 'white';
-  const forestOpacity = isStorm ? '0.8' : '0.95';
-  
-  return (
-    <div className="fixed bottom-0 left-0 w-full h-[75dvh] z-0 pointer-events-none overflow-hidden">
-      <svg viewBox="0 0 1200 800" preserveAspectRatio="none" className="w-full h-full transition-all duration-1000">
-        <defs>
-          <linearGradient id="mistGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={mistColor} stopOpacity="0" />
-            <stop offset="30%" stopColor={mistColor} stopOpacity="0.05" />
-            <stop offset="100%" stopColor={mistColor} stopOpacity={isStorm ? "0.4" : "0.7"} />
-          </linearGradient>
-        </defs>
-
-        <g className="fill-black" style={{ opacity: forestOpacity }}>
-          {/* Deep Forest Silhouettes - Left Side */}
-          <path d="M-80,800 L-20,250 L100,450 L50,470 L140,580 L90,600 L220,750 L-80,800 Z" opacity="0.3" />
-          <path d="M-40,800 L10,320 L120,470 L70,490 L160,600 L100,620 L250,770 L-40,800 Z" opacity="0.4" />
-          <path d="M0,800 L30,400 L110,500 L60,510 L140,620 L80,640 L200,780 L0,800 Z" opacity="0.6" />
-          <path d="M-20,800 L20,430 L80,520 L40,530 L100,610 L60,630 L160,760 L-20,800 Z" opacity="0.8" />
-          <path d="M0,800 L0,480 L50,530 L20,540 L70,620 L40,640 L110,750 L0,800 Z" />
-
-          {/* Deep Forest Silhouettes - Right Side */}
-          <path d="M1280,800 L1220,280 L1100,470 L1150,490 L1060,600 L1110,620 L980,770 L1280,800 Z" opacity="0.3" />
-          <path d="M1240,800 L1190,350 L1080,500 L1130,520 L1040,630 L1100,650 L950,790 L1240,800 Z" opacity="0.4" />
-          <path d="M1200,800 L1170,410 L1090,520 L1140,540 L1060,640 L1120,660 L1000,780 L1200,800 Z" opacity="0.6" />
-          <path d="M1220,800 L1180,440 L1120,530 L1160,550 L1100,620 L1140,640 L1040,760 L1220,800 Z" opacity="0.8" />
-          <path d="M1200,800 L1200,490 L1150,540 L1180,550 L1130,630 L1160,650 L1090,750 L1200,800 Z" />
-        </g>
-
-        <rect width="1200" height="800" fill="url(#mistGrad)" />
-        
-        <ellipse cx="600" cy="780" rx="400" ry="100" fill={mistColor} opacity="0.15" />
-        <path d="M0,800 Q300,720 600,760 Q900,800 1200,740 L1200,800 L0,800 Z" fill={mistColor} opacity="0.2" />
-      </svg>
-      
-      <div className={`absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-${isStorm ? 'cyan-900/10' : 'white/10'} to-transparent pointer-events-none`}></div>
-    </div>
-  );
-};
-
 const AntigravityBackground = ({ theme, isLabiba }: { theme: ThemeType, isLabiba: boolean }) => {
-  const config = THEMES[theme];
+  const config = THEMES[theme] || THEMES.fire;
   const particles = useMemo(() => {
     const isStorm = theme === 'water';
-    const count = theme === 'snow' ? 120 : (isStorm ? 250 : 40);
-    return Array.from({ length: count }).map((_, i) => ({
-      id: i,
-      size: isStorm ? Math.random() * 1.5 + 0.5 : (theme === 'snow' ? Math.random() * 3 + 1 : (config.particleType === 'fall' ? Math.random() * 4 + 2 : Math.random() * 3 + 1)),
-      left: Math.random() * 100,
-      duration: isStorm ? 0.2 + Math.random() * 0.3 : (theme === 'snow' ? 2.5 + Math.random() * 6 : (config.particleType === 'fall' ? 5 + Math.random() * 5 : 10 + Math.random() * 25)),
-      delay: Math.random() * 20,
-      opacity: isStorm ? 0.1 + Math.random() * 0.3 : (theme === 'snow' ? 0.4 + Math.random() * 0.6 : 0.1 + Math.random() * 0.2),
-      blur: theme === 'snow' && Math.random() > 0.85 ? 'blur-[1px]' : 'blur-[0px]',
-      height: isStorm ? 40 + Math.random() * 80 : 0,
-    }));
-  }, [theme]);
+    const isStars = theme === 'moonlight';
+    const isFire = theme === 'fire';
+    const count = isLabiba ? 120 : (isStars ? 400 : (theme === 'snow' ? 120 : (isStorm ? 250 : 60)));
+    
+    return Array.from({ length: count }).map((_, i) => {
+      const isSpecial = isLabiba && Math.random() > 0.4;
+      return {
+        id: i,
+        size: isStars ? Math.random() * 1.5 + 0.3 : (isStorm ? Math.random() * 1.5 + 0.5 : (theme === 'snow' ? Math.random() * 3 + 1 : (isFire ? Math.random() * 5 + 2 : (isLabiba ? Math.random() * 8 + 4 : 3)))),
+        left: Math.random() * 100,
+        top: isStars ? Math.random() * 100 : undefined,
+        duration: isStars ? 3 + Math.random() * 4 : (isStorm ? 0.2 + Math.random() * 0.3 : (theme === 'snow' ? 2.5 + Math.random() * 6 : (isFire ? 8 + Math.random() * 15 : (isLabiba ? 12 + Math.random() * 10 : 10 + Math.random() * 25)))),
+        delay: Math.random() * 20,
+        opacity: isStars ? 0.2 + Math.random() * 0.8 : (isStorm ? 0.1 + Math.random() * 0.3 : (theme === 'snow' ? 0.4 + Math.random() * 0.6 : 0.1 + Math.random() * 0.3)),
+        blur: (theme === 'snow' || isStars || isFire || isLabiba) && Math.random() > 0.8 ? 'blur-[1px]' : 'blur-[0px]',
+        height: isStorm ? 40 + Math.random() * 80 : 0,
+        content: isSpecial ? (Math.random() > 0.5 ? '❤️' : '🌸') : null,
+      };
+    });
+  }, [theme, isLabiba]);
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       <style>{`
-        @keyframes driftUp {
-          0% { transform: translateY(0) rotate(0deg) translateX(0); }
-          50% { transform: translateY(-50dvh) rotate(180deg) translateX(15px); }
-          100% { transform: translateY(-110dvh) rotate(360deg) translateX(0); }
-        }
-        @keyframes driftDown {
-          0% { transform: translateY(-110dvh) rotate(0deg) translateX(0); }
-          100% { transform: translateY(110dvh) rotate(360deg) translateX(0); }
-        }
-        @keyframes snowFall {
-          0% { transform: translateY(-10vh) translateX(0) rotate(0deg); }
-          33% { transform: translateY(30vh) translateX(15px) rotate(120deg); }
-          66% { transform: translateY(70vh) translateX(-15px) rotate(240deg); }
-          100% { transform: translateY(110vh) translateX(0) rotate(360deg); }
-        }
-        @keyframes rainFall {
-          0% { transform: translateY(-150px); }
-          100% { transform: translateY(110dvh); }
-        }
-        @keyframes driftFloat {
-          0% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(20px, -30px) scale(1.1); }
-          66% { transform: translate(-20px, -60px) scale(0.9); }
-          100% { transform: translate(0, -110dvh) scale(1); }
-        }
-        .particle-anim {
-          position: absolute;
-          border-radius: 50%;
-        }
-        .rain-anim {
-          position: absolute;
-          width: 1px;
-          background: linear-gradient(to bottom, transparent, rgba(34, 211, 238, 0.4));
-          filter: blur(0.5px);
-        }
+        @keyframes driftUp { 0% { transform: translateY(0); } 100% { transform: translateY(-110dvh); } }
+        @keyframes driftDown { 0% { transform: translateY(-110dvh); } 100% { transform: translateY(110dvh); } }
+        @keyframes snowFall { 0% { transform: translateY(-10vh); } 100% { transform: translateY(110vh); } }
+        @keyframes rainFall { 0% { transform: translateY(-150px); } 100% { transform: translateY(110dvh); } }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+        .particle-anim { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
       `}</style>
       {particles.map((p) => {
         let animationName = 'driftUp';
         if (theme === 'snow') animationName = 'snowFall';
         else if (theme === 'water') animationName = 'rainFall';
+        else if (theme === 'moonlight') animationName = 'twinkle';
         else if (config.particleType === 'fall') animationName = 'driftDown';
-        else if (config.particleType === 'float') animationName = 'driftFloat';
 
         if (theme === 'water') {
            return (
-            <div
-              key={p.id}
-              className="rain-anim"
-              style={{
-                height: `${p.height}px`,
-                left: `${p.left}%`,
-                top: '-150px',
-                opacity: p.opacity,
-                animation: `rainFall ${p.duration}s linear infinite`,
-                animationDelay: `-${p.delay}s`,
-              }}
+            <div key={p.id} className="absolute w-[1px] bg-cyan-400/20"
+              style={{ height: `${p.height}px`, left: `${p.left}%`, top: '-150px', opacity: p.opacity, animation: `rainFall ${p.duration}s linear infinite`, animationDelay: `-${p.delay}s` }}
             />
           );
         }
 
         return (
-          <div
-            key={p.id}
-            className={`particle-anim ${isLabiba ? 'bg-pink-300' : config.particle} ${p.blur}`}
+          <div key={p.id} className={`particle-anim ${p.content ? '' : (isLabiba ? 'bg-pink-300' : config.particle)} ${p.blur}`}
             style={{
-              width: `${p.size}px`,
-              height: `${p.size}px`,
+              width: p.content ? 'auto' : `${p.size}px`, 
+              height: p.content ? 'auto' : `${p.size}px`, 
               left: `${p.left}%`,
-              bottom: config.particleType === 'fall' || theme === 'snow' ? 'auto' : '-20px',
-              top: config.particleType === 'fall' || theme === 'snow' ? '-20px' : 'auto',
-              opacity: p.opacity,
-              animation: `${animationName} ${p.duration}s linear infinite`,
+              bottom: theme === 'moonlight' ? undefined : (config.particleType === 'fall' || theme === 'snow' ? 'auto' : '-40px'),
+              top: theme === 'moonlight' ? `${p.top}%` : (config.particleType === 'fall' || theme === 'snow' ? '-40px' : 'auto'),
+              opacity: p.opacity, 
+              animation: `${animationName} ${p.duration}s ease-in-out infinite`, 
               animationDelay: `-${p.delay}s`,
+              fontSize: p.content ? `${p.size * 2}px` : 'inherit',
             }}
-          />
+          >
+            {p.content}
+          </div>
         );
       })}
     </div>
@@ -201,69 +227,44 @@ const AntigravityBackground = ({ theme, isLabiba }: { theme: ThemeType, isLabiba
 
 const RomanceShower = ({ active }: { active: boolean }) => {
   const [items, setItems] = useState<{ id: number; left: number; delay: number; scale: number; char: string }[]>([]);
-  const chars = ['❤️', '💖', '💝', '🌷', '✨', '🌸', '🌷', '💓', '🌹', '💐'];
-  
+  const chars = ['❤️', '💖', '✨', '🌸', '🎀', '💓', '🧸', '💝'];
   useEffect(() => {
-    if (!active) {
-      const timer = setTimeout(() => setItems([]), 500);
-      return () => clearTimeout(timer);
-    }
-    
+    if (!active) { setTimeout(() => setItems([]), 500); return; }
     const interval = setInterval(() => {
-      setItems(prev => [
-        ...prev.slice(-40), 
-        { 
-          id: Date.now() + Math.random(), 
-          left: Math.random() * 100, 
-          delay: Math.random() * 0.05,
-          scale: 0.6 + Math.random() * 1.2,
-          char: chars[Math.floor(Math.random() * chars.length)]
-        }
-      ]);
-    }, 60);
-
+      setItems(prev => [...prev.slice(-35), { 
+        id: Date.now() + Math.random(), left: Math.random() * 100, delay: Math.random() * 0.05,
+        scale: 0.8 + Math.random() * 1.2, char: chars[Math.floor(Math.random() * chars.length)]
+      }]);
+    }, 80);
     return () => clearInterval(interval);
   }, [active]);
-
   return (
     <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden">
       {items.map(h => (
-        <div
-          key={h.id}
-          className="absolute bottom-[-50px] text-xl md:text-3xl animate-float-up"
-          style={{ 
-            left: `${h.left}%`, 
-            animationDelay: `${h.delay}s`,
-            transform: `scale(${h.scale})`,
-            filter: 'drop-shadow(0 0 10px rgba(255,100,200,0.4))'
-          }}
-        >
-          {h.char}
-        </div>
+        <div key={h.id} className="absolute bottom-[-50px] text-2xl md:text-4xl animate-float-up"
+          style={{ left: `${h.left}%`, animationDelay: `${h.delay}s`, transform: `scale(${h.scale})` }}
+        >{h.char}</div>
       ))}
     </div>
   );
 };
 
+const LabibaGlow = ({ active }: { active: boolean }) => {
+  if (!active) return null;
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[1] transition-opacity duration-1000">
+      <div className="absolute inset-0 bg-gradient-to-br from-pink-500/15 via-purple-500/5 to-transparent opacity-80" />
+      <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-pink-600/10 to-transparent" />
+      <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-pink-600/10 to-transparent" />
+    </div>
+  );
+}
+
 const CopyButton = ({ content }: { content: string }) => {
   const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-    }
-  };
-
+  const handleCopy = async () => { try { await navigator.clipboard.writeText(content); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch (err) {} };
   return (
-    <button
-      onClick={handleCopy}
-      className="opacity-0 group-hover:opacity-40 hover:!opacity-100 transition-all p-1 text-zinc-500"
-      title="Copy to clipboard"
-    >
+    <button onClick={handleCopy} className="opacity-40 hover:!opacity-100 transition-all p-1 text-zinc-500">
       {copied ? <Icons.Check /> : <Icons.Copy />}
     </button>
   );
@@ -276,19 +277,39 @@ const App: React.FC = () => {
   const [currentResponse, setCurrentResponse] = useState('');
   const [isLocalMode, setIsLocalMode] = useState(false);
   const [showRomance, setShowRomance] = useState(false);
-  
+  const [usage, setUsage] = useState(() => {
+    const saved = localStorage.getItem('irone_usage');
+    return saved ? JSON.parse(saved) : { count: 0, startTime: Date.now() };
+  });
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
   const [currentTheme, setCurrentTheme] = useState<ThemeType>(() => {
     const saved = localStorage.getItem('irone_theme');
-    return (saved as ThemeType) || 'standard';
+    const validThemes: ThemeType[] = ['fire', 'moonlight', 'snow', 'water'];
+    return validThemes.includes(saved as ThemeType) ? (saved as ThemeType) : 'fire';
   });
-  
-  const [isLabibaMode, setIsLabibaMode] = useState(() => {
-    return localStorage.getItem('irone_is_labiba') === 'true';
-  });
-
+  const [isLabibaMode, setIsLabibaMode] = useState(() => localStorage.getItem('irone_is_labiba') === 'true');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString([], { hour12: false }));
+
+  useEffect(() => {
+    const checkQuota = () => {
+      const now = Date.now();
+      const elapsed = now - usage.startTime;
+      if (elapsed >= RESET_WINDOW_MS) {
+        setUsage({ count: 0, startTime: now });
+        localStorage.setItem('irone_usage', JSON.stringify({ count: 0, startTime: now }));
+        setTimeLeft(null);
+      } else if (usage.count >= QUOTA_LIMIT) {
+        const remaining = RESET_WINDOW_MS - elapsed;
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        setTimeLeft(`${mins}:${secs.toString().padStart(2, '0')}`);
+      }
+    };
+    const interval = setInterval(checkQuota, 1000);
+    return () => clearInterval(interval);
+  }, [usage]);
 
   useEffect(() => {
     localStorage.setItem('irone_theme', currentTheme);
@@ -296,184 +317,110 @@ const App: React.FC = () => {
   }, [currentTheme, isLabibaMode]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSystemTime(new Date().toLocaleTimeString([], { hour12: false }));
-    }, 1000);
+    const timer = setInterval(() => setSystemTime(new Date().toLocaleTimeString([], { hour12: false })), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  useEffect(() => { 
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); 
   }, [messages, currentResponse]);
 
   const toggleTheme = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const themes: ThemeType[] = ['standard', 'fire', 'snow', 'water'];
+    const themes: ThemeType[] = ['fire', 'moonlight', 'snow', 'water'];
     const currentIndex = themes.indexOf(currentTheme);
     const nextIndex = (currentIndex + 1) % themes.length;
     setCurrentTheme(themes[nextIndex]);
   };
 
-  const triggerRomanceBurst = () => {
-    setShowRomance(true);
-    setTimeout(() => setShowRomance(false), 3000);
-  };
-
-  const handleSubmit = async (e?: React.FormEvent, customInput?: string) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    
-    const val = (customInput || input).trim();
+    if (usage.count >= QUOTA_LIMIT && timeLeft !== null) return;
+    const val = input.trim();
     if (!val || isTyping) return;
-
+    
     let currentlyLabiba = isLabibaMode;
-    const labibaKeywords = ["i am labiba", "moi labiba", "labiba nushan", "it's labiba", "labiba here", "queen labiba"];
+    const labibaKeywords = ["labiba"];
     if (labibaKeywords.some(k => val.toLowerCase().includes(k))) {
       currentlyLabiba = true;
       setIsLabibaMode(true);
-      triggerRomanceBurst();
-    } else if (currentlyLabiba) {
-      triggerRomanceBurst();
+      setShowRomance(true);
+      setTimeout(() => setShowRomance(false), 6000);
     }
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: Role.USER,
-      content: val,
-      timestamp: new Date(),
-    };
-
+    
+    const userMsg: Message = { id: Date.now().toString(), role: Role.USER, content: val, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
     setCurrentResponse('');
-    
     const hasKey = typeof process !== 'undefined' && !!process.env.API_KEY;
     setIsLocalMode(!hasKey);
-
-    const history = messages.map(m => ({
-      role: m.role === Role.USER ? "user" : "model",
-      parts: [{ text: m.content }]
-    }));
-
+    const history = messages.map(m => ({ role: m.role === Role.USER ? "user" : "model", parts: [{ text: m.content }] }));
+    const newUsage = { ...usage, count: usage.count + 1 };
+    setUsage(newUsage);
+    localStorage.setItem('irone_usage', JSON.stringify(newUsage));
     try {
       let full = '';
-      const stream = streamWithAI(val, history, false, currentlyLabiba);
-      for await (const chunk of stream) {
-        full += chunk;
-        setCurrentResponse(full);
-      }
-      
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: Role.MODEL,
-        content: full,
-        timestamp: new Date(),
-      }]);
-      
+      const stream = streamWithAI(val, history, currentlyLabiba);
+      for await (const chunk of stream) { full += chunk; setCurrentResponse(full); }
+      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: Role.MODEL, content: full, timestamp: new Date() }]);
       setCurrentResponse('');
-
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsTyping(false);
-      setIsLocalMode(false);
-    }
+    } catch (err) { console.error(err); } finally { setIsTyping(false); setIsLocalMode(false); }
   };
 
-  const themeData = THEMES[currentTheme];
-  const accentColor = isLabibaMode ? 'text-pink-500' : themeData.accent;
+  const themeData = THEMES[currentTheme] || THEMES.fire;
+  const accentColor = isLabibaMode ? 'text-pink-400' : themeData.accent;
   const selectionColor = isLabibaMode ? 'pink-500' : themeData.accent.replace('text-', '');
-  const borderColor = isLabibaMode ? 'border-pink-900/20' : 'border-zinc-800';
+  const borderColor = isLabibaMode ? 'border-pink-900/50' : 'border-zinc-800';
+  const isQuotaLocked = usage.count >= QUOTA_LIMIT && timeLeft !== null;
 
   return (
-    <div className={`flex flex-col h-[100dvh] ${themeData.bg} text-zinc-400 selection:bg-${selectionColor} transition-all duration-1000 overflow-hidden`}>
+    <div className={`flex flex-col h-[100dvh] w-full ${themeData.bg} text-zinc-400 selection:bg-${selectionColor} transition-all duration-1000 overflow-hidden relative`}>
       <AntigravityBackground theme={currentTheme} isLabiba={isLabibaMode} />
-      {(currentTheme === 'snow' || currentTheme === 'water') && <ForestPath theme={currentTheme} />}
+      <SkyCycle theme={currentTheme} />
+      {(currentTheme === 'snow' || currentTheme === 'water' || currentTheme === 'moonlight') && <ForestPath theme={currentTheme} />}
       <Thunderstorm active={currentTheme === 'water'} />
       <RomanceShower active={showRomance} />
+      <LabibaGlow active={isLabibaMode} />
       
-      <nav className="flex items-center justify-between px-6 md:px-12 py-8 md:py-12 z-50">
-        <div className="flex items-center gap-4">
-          <h1 
-            className={`text-xl md:text-2xl font-[900] uppercase tracking-tighter cursor-pointer ${accentColor} transition-colors`} 
-            onClick={() => {
-              setMessages([]);
-              setIsLabibaMode(false);
-              localStorage.removeItem('irone_is_labiba');
-            }}
-          >
-            IRONE
-          </h1>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={toggleTheme}
-              className="text-zinc-800 hover:text-white transition-colors p-2"
-              title="Toggle Theme"
-            >
-              <Icons.Theme />
-            </button>
-          </div>
+      <nav className="flex items-center justify-between px-4 sm:px-6 md:px-12 py-4 sm:py-6 md:py-8 z-[100] relative">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <h1 className={`text-lg sm:text-xl md:text-2xl font-[900] uppercase tracking-tighter cursor-pointer ${accentColor}`} onClick={() => window.location.reload()}>IRONE</h1>
+          <button onClick={toggleTheme} className="text-zinc-800 hover:text-white p-1.5 sm:p-2 transition-transform hover:scale-110 active:rotate-45 duration-300"><Icons.Theme /></button>
         </div>
-        
-        <div className="flex items-center gap-6">
-          <span className="mono text-[10px] text-zinc-800 font-bold uppercase tracking-widest hidden md:block">
-            {isLabibaMode ? 'QUEEN_MODE' : themeData.name} / {systemTime}
-          </span>
-          <button 
-            onClick={() => {
-              setMessages([]);
-              setIsLabibaMode(false);
-              localStorage.removeItem('irone_is_labiba');
-            }} 
-            className="text-zinc-800 hover:text-white transition-opacity"
-          >
-            <Icons.Trash />
-          </button>
+        <div className="flex items-center gap-4 sm:gap-6">
+          <span className="mono text-[8px] sm:text-[10px] text-zinc-800 font-bold uppercase tracking-widest hidden sm:block">{isLabibaMode ? 'QUEEN' : themeData.name} / {systemTime}</span>
+          <button onClick={() => {setMessages([]); setIsLabibaMode(false); localStorage.removeItem('irone_is_labiba');}} className="text-zinc-800 hover:text-white transition-all hover:text-red-500 hover:scale-110"><Icons.Trash /></button>
         </div>
       </nav>
 
-      <main className="flex-1 overflow-y-auto px-6 md:px-12 z-10 relative">
+      <main className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-12 z-10 relative scroll-smooth touch-pan-y">
         <div className="max-w-3xl mx-auto w-full flex flex-col h-full">
-          
           {messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center pb-24">
-              <h2 className={`text-4xl md:text-7xl font-[900] uppercase tracking-tighter animate-welcome ${isLabibaMode ? 'text-pink-500' : 'text-white'}`}>
-                {isLabibaMode ? 'WELCOME QUEEN' : 'WELCOME BABY'}
+            <div className="flex-1 flex flex-col items-center justify-center text-center pb-12 sm:pb-24">
+              <h2 className={`text-4xl sm:text-6xl md:text-9xl font-stylish animate-welcome drop-shadow-[0_4px_30px_rgba(255,255,255,0.15)] ${isLabibaMode ? 'text-pink-400 opacity-100 drop-shadow-[0_0_25px_rgba(244,114,182,0.4)]' : 'text-zinc-100 opacity-70'} leading-tight`}>
+                {isLabibaMode ? 'Welcome Queen' : 'Welcome Baby'}
               </h2>
+              {isQuotaLocked && <p className="mono text-[9px] sm:text-[11px] mt-6 sm:mt-8 text-orange-500 font-bold uppercase tracking-widest animate-pulse">SYSTEM_LOCKED: {timeLeft}</p>}
             </div>
           ) : (
-            <div className="flex flex-col gap-12 md:gap-16 pt-4 pb-48">
+            <div className="flex flex-col gap-8 sm:gap-12 md:gap-16 pt-4 pb-48 sm:pb-64">
               {messages.map((m) => (
-                <div key={m.id} className="message-fade-in group">
-                  <div className="flex flex-col gap-2 relative">
-                    <div className={`mono text-[8px] font-black uppercase tracking-widest flex items-center gap-2 ${m.role === Role.USER ? 'justify-end text-zinc-800' : 'justify-start ' + accentColor + ' opacity-40'}`}>
-                      {m.role === Role.USER ? 'INPUT' : (
-                        <>
-                          <span>RESPONSE</span>
-                          <CopyButton content={m.content} />
-                        </>
-                      )}
+                <div key={m.id} className="group">
+                  <div className="flex flex-col gap-2">
+                    <div className={`mono text-[7px] sm:text-[8px] font-black uppercase tracking-widest flex items-center gap-2 ${m.role === Role.USER ? 'justify-end text-zinc-800' : 'justify-start ' + accentColor + ' opacity-30'}`}>
+                      {m.role === Role.USER ? 'INPUT' : <><span className="flex items-center gap-1">{isLabibaMode ? 'FOR_QUEEN' : 'VERDICT'}</span><CopyButton content={m.content} /></>}
                     </div>
-                    <div className={`text-base md:text-xl leading-relaxed ${
-                      m.role === Role.USER ? 'text-zinc-600 font-medium italic text-right' : (isLabibaMode ? 'text-pink-100 font-semibold drop-shadow-[0_0_12px_rgba(255,182,193,0.4)]' : 'text-zinc-100 font-bold')
-                    }`}>
+                    <div className={`text-sm sm:text-base md:text-xl leading-relaxed break-words ${m.role === Role.USER ? 'text-zinc-600 font-medium italic text-right' : (isLabibaMode ? 'text-pink-100 font-semibold drop-shadow-[0_0_8px_rgba(255,182,193,0.3)]' : 'text-zinc-100 font-bold')}`}>
                       {m.content}
                     </div>
                   </div>
                 </div>
               ))}
-              
               {currentResponse && (
-                <div className="message-fade-in">
-                  <div className="flex flex-col gap-2">
-                    <div className={`mono text-[8px] font-black uppercase tracking-widest animate-pulse ${accentColor} opacity-40`}>
-                      ...
-                    </div>
-                    <div className="text-base md:text-xl leading-relaxed text-zinc-100 font-bold">
-                      {currentResponse}
-                      <span className={`cursor-blink ml-1 ${accentColor}`}></span>
-                    </div>
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <div className={`mono text-[7px] sm:text-[8px] font-black uppercase tracking-widest animate-pulse ${accentColor} opacity-30`}>...</div>
+                  <div className={`text-sm sm:text-base md:text-xl leading-relaxed font-bold break-words ${isLabibaMode ? 'text-pink-200' : 'text-zinc-100'}`}>{currentResponse}<span className={`cursor-blink ml-1 ${accentColor}`}></span></div>
                 </div>
               )}
             </div>
@@ -482,37 +429,40 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <footer className={`fixed bottom-0 left-0 right-0 p-6 md:p-12 z-50`}>
+      <footer className={`fixed bottom-0 left-0 right-0 p-4 sm:p-6 md:p-12 z-[150] bg-gradient-to-t from-${themeData.bg.replace('bg-', '')} via-${themeData.bg.replace('bg-', '')} to-transparent`}>
         <div className="max-w-3xl mx-auto w-full">
-          <div className={`border-b-2 transition-all duration-300 ${borderColor}`}>
+          <div className={`border-b-2 transition-all duration-300 relative ${borderColor} ${isQuotaLocked ? 'opacity-20 pointer-events-none' : ''}`}>
             <form onSubmit={handleSubmit} className="flex items-center">
               <input 
-                ref={inputRef}
-                autoFocus
-                className="w-full bg-transparent py-4 md:py-6 text-base md:text-xl text-white placeholder:text-zinc-900 focus:outline-none mono font-bold uppercase tracking-wider"
-                placeholder={isTyping ? "" : "SPEAK..."}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isTyping}
-                spellCheck="false"
-                autoComplete="off"
+                ref={inputRef} 
+                autoFocus 
+                className="w-full bg-transparent py-4 sm:py-6 px-1 sm:px-2 text-sm sm:text-base md:text-xl text-white placeholder:text-zinc-900 focus:outline-none mono font-bold uppercase"
+                placeholder={isQuotaLocked ? `WAIT ${timeLeft}...` : (isTyping ? "" : "SPEAK...")}
+                value={input} 
+                onChange={(e) => setInput(e.target.value)} 
+                disabled={isTyping || isQuotaLocked} 
+                autoComplete="off" 
               />
               <button 
-                type="submit"
-                disabled={!input.trim() || isTyping}
-                className={`p-2 transition-transform active:scale-90 disabled:opacity-0 ${accentColor}`}
+                type="submit" 
+                disabled={!input.trim() || isTyping || isQuotaLocked} 
+                className={`p-2 active:scale-90 transition-opacity disabled:opacity-0 ${accentColor}`}
               >
                 <Icons.Send />
               </button>
             </form>
           </div>
-          <div className="mt-8 flex justify-between items-center text-[8px] md:text-[9px] mono font-bold uppercase tracking-[0.4em] opacity-10">
-            <div className="flex gap-8">
-              <span>{isLocalMode ? 'LOCAL_NODE' : 'CORE_STREAM'}</span>
-              <span>8MS</span>
+          <div className="mt-4 sm:mt-8 flex justify-between items-center text-[7px] sm:text-[9px] mono font-bold uppercase tracking-[0.2em] sm:tracking-[0.4em] opacity-20">
+            <div className="flex gap-4 sm:gap-8"><span>{isLocalMode ? 'LOCAL' : 'CORE'}</span><span>STABLE</span></div>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span>{QUOTA_LIMIT - usage.count}/{QUOTA_LIMIT}</span>
+              <div className="w-12 sm:w-16 h-[1px] sm:h-[2px] bg-zinc-900 rounded-full overflow-hidden">
+                <div className="h-full bg-current transition-all duration-500" style={{ width: `${(usage.count / QUOTA_LIMIT) * 100}%` }} />
+              </div>
             </div>
-            <span>V_11.0.0_DEEP_FOREST</span>
           </div>
+          {/* iOS Safari Home Indicator Spacing */}
+          <div className="h-safe-bottom sm:h-0" />
         </div>
       </footer>
     </div>

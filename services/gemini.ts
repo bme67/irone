@@ -1,12 +1,11 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { STANDARD_SYSTEM_INSTRUCTION, CONCISE_SYSTEM_INSTRUCTION, LABIBA_SYSTEM_INSTRUCTION } from "../constants.tsx";
+import { STANDARD_SYSTEM_INSTRUCTION, LABIBA_SYSTEM_INSTRUCTION } from "../constants.tsx";
 import { getLocalResponseStream } from "../localBrain.ts";
 
 export const streamWithAI = async function* (
   message: string,
   history: { role: string; parts: { text: string }[] }[] = [],
-  isConciseMode: boolean = false,
   isLabibaMode: boolean = false
 ) {
   const hasApiKey = typeof process !== 'undefined' && !!process.env.API_KEY;
@@ -19,12 +18,11 @@ export const streamWithAI = async function* (
   }
 
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  let instruction = isConciseMode ? CONCISE_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
-  if (isNowLabiba) instruction = LABIBA_SYSTEM_INSTRUCTION;
+  let instruction = isNowLabiba ? LABIBA_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
 
-  const contents = history
+  const contents: any[] = history
     .filter(h => h.role === 'user' || h.role === 'model')
-    .slice(-15)
+    .slice(-10)
     .map(h => ({
       role: h.role,
       parts: [{ text: h.parts[0].text }]
@@ -34,11 +32,11 @@ export const streamWithAI = async function* (
 
   try {
     const streamResponse = await ai.models.generateContentStream({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-flash-preview", 
       contents: contents,
       config: {
         systemInstruction: instruction,
-        temperature: isNowLabiba ? 0.7 : 1.1,
+        temperature: isNowLabiba ? 0.7 : 0.9,
         topP: 0.95,
         tools: [{ googleSearch: {} }],
       },
@@ -53,11 +51,8 @@ export const streamWithAI = async function* (
         }
       }
     } catch (streamError: any) {
-      // If stream breaks midway (e.g. safety filter or quota hit)
-      console.warn("Stream interrupted, falling back:", streamError);
-      if (!hasProducedText) {
-        yield* getLocalResponseStream(message, isNowLabiba);
-      }
+      console.warn("Stream interrupted:", streamError);
+      if (!hasProducedText) yield* getLocalResponseStream(message, isNowLabiba);
     }
 
     if (!hasProducedText) {

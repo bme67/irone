@@ -1,20 +1,19 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>irone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>irone - Savage AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800;900&family=Pacifico&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #080808;
-            --text-primary: #a1a1aa; /* Gray 400 */
-            --accent-hostile: #f97316; /* Orange 500 */
-            --accent-labiba: #ff4db8;
+            --text-primary: #a1a1aa;
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -24,102 +23,85 @@
             overflow: hidden;
             height: 100dvh;
             margin: 0;
+            position: fixed; /* Prevent bouncy scrolling on iOS */
+            width: 100%;
         }
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-        ::selection {
-            background: var(--accent-hostile);
-            color: #ffffff;
-        }
-        ::-webkit-scrollbar {
-            width: 2px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #262626;
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .font-stylish { font-family: 'Pacifico', cursive; }
+        
+        .scanlines::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            z-index: 100;
+            background-size: 100% 4px;
+            pointer-events: none;
+            opacity: 0.05;
         }
 
         .cursor-blink {
             display: inline-block;
             width: 8px;
-            height: 1em;
-            background: currentColor;
+            height: 18px;
+            background-color: currentColor;
+            animation: blink 1s step-end infinite;
             vertical-align: middle;
-            animation: blink 0.8s infinite step-start;
         }
         @keyframes blink {
+            from, to { opacity: 1; }
             50% { opacity: 0; }
         }
 
-        .message-fade-in {
-            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        @keyframes welcome {
+            from { opacity: 0; transform: translateY(30px) scale(0.9); }
+            to { opacity: 0.7; transform: translateY(0) scale(1); }
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .animate-welcome { animation: welcome 1.5s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
 
-        /* Sophisticated Text Reveal Animation */
-        @keyframes welcomeReveal {
-            0% { 
-                opacity: 0; 
-                transform: translateY(20px);
-                letter-spacing: -0.05em;
-                filter: blur(10px);
-            }
-            100% { 
-                opacity: 1; 
-                transform: translateY(0);
-                letter-spacing: -0.02em;
-                filter: blur(0);
-            }
+        @keyframes float-up {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
         }
-        .animate-welcome {
-            animation: welcomeReveal 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-        }
+        .animate-float-up { animation: float-up 4s linear forwards; }
 
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(0) rotate(0deg); opacity: 0; }
-            20% { opacity: 1; transform: translateY(-15dvh) scale(1); }
-            100% { transform: translateY(-110dvh) scale(1.3) rotate(20deg); opacity: 0; }
+        @keyframes shooting-star {
+            0% { transform: translateX(0) translateY(0) rotate(-45deg) scale(0); opacity: 0; }
+            10% { transform: translateX(-50px) translateY(50px) rotate(-45deg) scale(1); opacity: 1; }
+            100% { transform: translateX(-1200px) translateY(1200px) rotate(-45deg) scale(1); opacity: 0; }
         }
-        .animate-float-up {
-            animation: floatUp 3s ease-in forwards;
-        }
-
-        /* Antigravity drifting animation */
-        @keyframes drift {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(10px, -20px) rotate(5deg); }
-            50% { transform: translate(-15px, -40px) rotate(-5deg); }
-            75% { transform: translate(15px, -60px) rotate(10deg); }
-            100% { transform: translate(0, -100dvh) rotate(0deg); }
-        }
-        .particle {
+        .shooting-star {
             position: absolute;
-            background: currentColor;
-            border-radius: 50%;
+            height: 2px;
+            background: linear-gradient(-45deg, #fff, rgba(255, 255, 255, 0));
+            filter: drop-shadow(0 0 8px #fff);
+            animation: shooting-star 1.2s ease-out forwards;
             pointer-events: none;
-            opacity: 0.1;
-            animation: drift infinite linear;
         }
+
+        .h-safe-bottom {
+            height: env(safe-area-inset-bottom, 0px);
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+    "react": "https://esm.sh/react@^19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>
 </head>
-<body>
+<body class="scanlines">
     <div id="root"></div>
-    <script type="module" src="index.tsx"></script>
 </body>
 </html>
