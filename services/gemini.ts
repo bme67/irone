@@ -12,15 +12,14 @@ export const streamWithAI = async function* (
   const labibaKeywords = [
     "i am labiba", 
     "moi labiba", 
-    "labiba nushan", 
     "it's labiba", 
     "queen labiba", 
+    "labiba nushan",
     "i'm labiba",
     "labiba name",
-    "name is labiba"
+    "my name is labiba"
   ];
   
-  // Update labiba status based on current input
   const isNowLabiba = isLabibaMode || labibaKeywords.some(k => message.toLowerCase().includes(k));
 
   if (!hasApiKey) {
@@ -31,7 +30,10 @@ export const streamWithAI = async function* (
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   let instruction = isNowLabiba ? LABIBA_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
 
-  // Use a shallow history to keep tokens high but personality sharp
+  // Enhance the instruction with mandatory constraints
+  instruction += "\nCRITICAL: YOUR RESPONSE MUST NOT EXCEED 5 LINES. YOU MUST RESPOND BASED ON THE CONTEXT OF THE USER INPUT WHILE MAINTAINING YOUR SAVAGE PERSONA.";
+
+  // Maintain last 8 exchanges for context
   const contents: any[] = history
     .filter(h => h.role === 'user' || h.role === 'model')
     .slice(-8)
@@ -48,11 +50,10 @@ export const streamWithAI = async function* (
       contents: contents,
       config: {
         systemInstruction: instruction,
-        temperature: isNowLabiba ? 0.7 : 1.0, // More temperature for more "savage" randomness
+        temperature: isNowLabiba ? 0.7 : 1.1,
         topP: 0.95,
-        // Optional search grounding if the model thinks it needs current context for a roast
-        tools: [{ googleSearch: {} }],
-        thinkingConfig: { thinkingBudget: 0 } // No thinking needed for raw speed and insults
+        topK: 40,
+        thinkingConfig: { thinkingBudget: 0 }
       },
     });
 
