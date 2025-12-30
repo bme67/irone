@@ -5,80 +5,109 @@ import { Icons, THEMES, ThemeType } from './constants.tsx';
 import { streamWithAI } from './services/gemini.ts';
 
 const Thunderstorm = ({ active }: { active: boolean }) => {
-  const [flash, setFlash] = useState(false);
+  const [flash, setFlash] = useState(0); // 0 to 1 intensity
 
   useEffect(() => {
     if (!active) return;
-    const triggerFlash = () => {
-      if (Math.random() > 0.8) {
-        setFlash(true);
-        setTimeout(() => setFlash(false), 50 + Math.random() * 150);
-        if (Math.random() > 0.5) {
-          setTimeout(() => {
-            setFlash(true);
-            setTimeout(() => setFlash(false), 50);
-          }, 200);
+    
+    let timeoutId: number;
+    const triggerLightning = () => {
+      // Create a sequence of flashes (double or triple strike)
+      const sequence = async () => {
+        // Strike 1
+        setFlash(0.4 + Math.random() * 0.4);
+        await new Promise(r => setTimeout(r, 50 + Math.random() * 100));
+        setFlash(0);
+        await new Promise(r => setTimeout(r, 30 + Math.random() * 50));
+        
+        // Strike 2 (often stronger)
+        setFlash(0.6 + Math.random() * 0.4);
+        await new Promise(r => setTimeout(r, 100 + Math.random() * 200));
+        setFlash(0);
+        
+        // Occasional Strike 3
+        if (Math.random() > 0.7) {
+          await new Promise(r => setTimeout(r, 50));
+          setFlash(0.3);
+          await new Promise(r => setTimeout(r, 50));
+          setFlash(0);
         }
-      }
-      setTimeout(triggerFlash, 3000 + Math.random() * 7000);
+      };
+
+      sequence();
+      timeoutId = window.setTimeout(triggerLightning, 4000 + Math.random() * 10000);
     };
-    const timer = setTimeout(triggerFlash, 2000);
-    return () => clearTimeout(timer);
+
+    timeoutId = window.setTimeout(triggerLightning, 3000);
+    return () => clearTimeout(timeoutId);
   }, [active]);
 
   if (!active) return null;
 
   return (
     <div 
-      className={`fixed inset-0 z-[5] pointer-events-none transition-opacity duration-75 ${flash ? 'bg-white/20 opacity-100' : 'opacity-0'}`} 
+      className="fixed inset-0 z-[5] pointer-events-none transition-opacity duration-75 ease-out" 
+      style={{ 
+        backgroundColor: `rgba(255, 255, 255, ${flash})`,
+        opacity: flash > 0 ? 1 : 0 
+      }} 
     />
   );
 };
 
-const SnowForest = () => (
-  <div className="fixed bottom-0 left-0 w-full h-[75dvh] z-0 pointer-events-none overflow-hidden">
-    <svg viewBox="0 0 1200 800" preserveAspectRatio="none" className="w-full h-full transition-all duration-1000">
-      <defs>
-        <linearGradient id="mistGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="white" stopOpacity="0" />
-          <stop offset="30%" stopColor="white" stopOpacity="0.05" />
-          <stop offset="100%" stopColor="white" stopOpacity="0.7" />
-        </linearGradient>
-      </defs>
+const ForestPath = ({ theme }: { theme: ThemeType }) => {
+  const isStorm = theme === 'water';
+  const mistColor = isStorm ? 'rgb(22, 78, 99)' : 'white';
+  const forestOpacity = isStorm ? '0.8' : '0.95';
+  
+  return (
+    <div className="fixed bottom-0 left-0 w-full h-[75dvh] z-0 pointer-events-none overflow-hidden">
+      <svg viewBox="0 0 1200 800" preserveAspectRatio="none" className="w-full h-full transition-all duration-1000">
+        <defs>
+          <linearGradient id="mistGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={mistColor} stopOpacity="0" />
+            <stop offset="30%" stopColor={mistColor} stopOpacity="0.05" />
+            <stop offset="100%" stopColor={mistColor} stopOpacity={isStorm ? "0.4" : "0.7"} />
+          </linearGradient>
+        </defs>
 
-      <g className="fill-black opacity-95">
-        <path d="M-50,800 L0,300 L80,450 L40,470 L120,580 L80,600 L200,750 L0,800 Z" opacity="0.4" />
-        <path d="M0,800 L30,400 L90,480 L50,490 L130,580 L70,600 L180,750 L0,800 Z" opacity="0.7" />
-        <path d="M0,800 L0,450 L40,480 L10,490 L60,550 L30,560 L90,650 L0,800 Z" />
+        <g className="fill-black" style={{ opacity: forestOpacity }}>
+          {/* Deep Left Forest */}
+          <path d="M-50,800 L0,300 L80,450 L40,470 L120,580 L80,600 L200,750 L0,800 Z" opacity="0.4" />
+          <path d="M0,800 L30,400 L90,480 L50,490 L130,580 L70,600 L180,750 L0,800 Z" opacity="0.7" />
+          <path d="M0,800 L0,450 L40,480 L10,490 L60,550 L30,560 L90,650 L0,800 Z" />
+          
+          {/* Deep Right Forest */}
+          <path d="M1250,800 L1200,320 L1120,470 L1160,490 L1080,600 L1120,620 L1000,770 L1200,800 Z" opacity="0.4" />
+          <path d="M1200,800 L1170,380 L1110,480 L1150,500 L1070,600 L1130,620 L1020,770 L1200,800 Z" opacity="0.7" />
+          <path d="M1200,800 L1200,420 L1160,470 L1190,480 L1140,540 L1170,550 L1110,640 L1200,800 Z" />
+        </g>
+
+        <rect width="1200" height="800" fill="url(#mistGrad)" />
         
-        <path d="M1250,800 L1200,320 L1120,470 L1160,490 L1080,600 L1120,620 L1000,770 L1200,800 Z" opacity="0.4" />
-        <path d="M1200,800 L1170,380 L1110,480 L1150,500 L1070,600 L1130,620 L1020,770 L1200,800 Z" opacity="0.7" />
-        <path d="M1200,800 L1200,420 L1160,470 L1190,480 L1140,540 L1170,550 L1110,640 L1200,800 Z" />
-      </g>
-
-      <rect width="1200" height="800" fill="url(#mistGrad)" />
+        <ellipse cx="600" cy="780" rx="400" ry="100" fill={mistColor} opacity="0.15" />
+        <path d="M0,800 Q300,720 600,760 Q900,800 1200,740 L1200,800 L0,800 Z" fill={mistColor} opacity="0.2" />
+      </svg>
       
-      <ellipse cx="600" cy="780" rx="400" ry="100" fill="white" opacity="0.15" />
-      <path d="M0,800 Q300,720 600,760 Q900,800 1200,740 L1200,800 L0,800 Z" fill="white" opacity="0.2" />
-    </svg>
-    
-    <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-white/10 to-transparent pointer-events-none"></div>
-  </div>
-);
+      <div className={`absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-${isStorm ? 'cyan-900/10' : 'white/10'} to-transparent pointer-events-none`}></div>
+    </div>
+  );
+};
 
 const AntigravityBackground = ({ theme, isLabiba }: { theme: ThemeType, isLabiba: boolean }) => {
   const config = THEMES[theme];
   const particles = useMemo(() => {
-    const count = theme === 'snow' ? 120 : (theme === 'water' ? 200 : 40);
+    const isStorm = theme === 'water';
+    const count = theme === 'snow' ? 120 : (isStorm ? 250 : 40);
     return Array.from({ length: count }).map((_, i) => ({
       id: i,
-      size: theme === 'water' ? Math.random() * 2 + 1 : (theme === 'snow' ? Math.random() * 3 + 1 : (config.particleType === 'fall' ? Math.random() * 4 + 2 : Math.random() * 3 + 1)),
+      size: isStorm ? Math.random() * 1.5 + 0.5 : (theme === 'snow' ? Math.random() * 3 + 1 : (config.particleType === 'fall' ? Math.random() * 4 + 2 : Math.random() * 3 + 1)),
       left: Math.random() * 100,
-      duration: theme === 'water' ? 0.3 + Math.random() * 0.4 : (theme === 'snow' ? 2.5 + Math.random() * 6 : (config.particleType === 'fall' ? 5 + Math.random() * 5 : 10 + Math.random() * 25)),
+      duration: isStorm ? 0.2 + Math.random() * 0.3 : (theme === 'snow' ? 2.5 + Math.random() * 6 : (config.particleType === 'fall' ? 5 + Math.random() * 5 : 10 + Math.random() * 25)),
       delay: Math.random() * 20,
-      opacity: theme === 'water' ? 0.2 + Math.random() * 0.4 : (theme === 'snow' ? 0.4 + Math.random() * 0.6 : 0.1 + Math.random() * 0.2),
+      opacity: isStorm ? 0.1 + Math.random() * 0.3 : (theme === 'snow' ? 0.4 + Math.random() * 0.6 : 0.1 + Math.random() * 0.2),
       blur: theme === 'snow' && Math.random() > 0.85 ? 'blur-[1px]' : 'blur-[0px]',
-      height: theme === 'water' ? 20 + Math.random() * 40 : 0,
+      height: isStorm ? 40 + Math.random() * 80 : 0,
     }));
   }, [theme]);
 
@@ -101,7 +130,7 @@ const AntigravityBackground = ({ theme, isLabiba }: { theme: ThemeType, isLabiba
           100% { transform: translateY(110vh) translateX(0) rotate(360deg); }
         }
         @keyframes rainFall {
-          0% { transform: translateY(-100px); }
+          0% { transform: translateY(-150px); }
           100% { transform: translateY(110dvh); }
         }
         @keyframes driftFloat {
@@ -117,7 +146,8 @@ const AntigravityBackground = ({ theme, isLabiba }: { theme: ThemeType, isLabiba
         .rain-anim {
           position: absolute;
           width: 1px;
-          background: linear-gradient(to bottom, transparent, rgba(34, 211, 238, 0.5));
+          background: linear-gradient(to bottom, transparent, rgba(34, 211, 238, 0.4));
+          filter: blur(0.5px);
         }
       `}</style>
       {particles.map((p) => {
@@ -135,7 +165,7 @@ const AntigravityBackground = ({ theme, isLabiba }: { theme: ThemeType, isLabiba
               style={{
                 height: `${p.height}px`,
                 left: `${p.left}%`,
-                top: '-100px',
+                top: '-150px',
                 opacity: p.opacity,
                 animation: `rainFall ${p.duration}s linear infinite`,
                 animationDelay: `-${p.delay}s`,
@@ -354,7 +384,7 @@ const App: React.FC = () => {
   return (
     <div className={`flex flex-col h-[100dvh] ${themeData.bg} text-zinc-400 selection:bg-${selectionColor} transition-all duration-1000 overflow-hidden`}>
       <AntigravityBackground theme={currentTheme} isLabiba={isLabibaMode} />
-      {currentTheme === 'snow' && <SnowForest />}
+      {(currentTheme === 'snow' || currentTheme === 'water') && <ForestPath theme={currentTheme} />}
       <Thunderstorm active={currentTheme === 'water'} />
       <RomanceShower active={showRomance} />
       
@@ -421,68 +451,4 @@ const App: React.FC = () => {
                       )}
                     </div>
                     <div className={`text-base md:text-xl leading-relaxed ${
-                      m.role === Role.USER ? 'text-zinc-600 font-medium italic text-right' : (isLabibaMode ? 'text-pink-100 font-semibold drop-shadow-[0_0_12px_rgba(255,182,193,0.4)]' : 'text-zinc-100 font-bold')
-                    }`}>
-                      {m.content}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {currentResponse && (
-                <div className="message-fade-in">
-                  <div className="flex flex-col gap-2">
-                    <div className={`mono text-[8px] font-black uppercase tracking-widest animate-pulse ${accentColor} opacity-40`}>
-                      ...
-                    </div>
-                    <div className="text-base md:text-xl leading-relaxed text-zinc-100 font-bold">
-                      {currentResponse}
-                      <span className={`cursor-blink ml-1 ${accentColor}`}></span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          <div ref={messagesEndRef} className="h-4" />
-        </div>
-      </main>
-
-      <footer className={`fixed bottom-0 left-0 right-0 p-6 md:p-12 z-50`}>
-        <div className="max-w-3xl mx-auto w-full">
-          <div className={`border-b-2 transition-all duration-300 ${borderColor}`}>
-            <form onSubmit={handleSubmit} className="flex items-center">
-              <input 
-                ref={inputRef}
-                autoFocus
-                className="w-full bg-transparent py-4 md:py-6 text-base md:text-xl text-white placeholder:text-zinc-900 focus:outline-none mono font-bold uppercase tracking-wider"
-                placeholder={isTyping ? "" : "SPEAK..."}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isTyping}
-                spellCheck="false"
-                autoComplete="off"
-              />
-              <button 
-                type="submit"
-                disabled={!input.trim() || isTyping}
-                className={`p-2 transition-transform active:scale-90 disabled:opacity-0 ${accentColor}`}
-              >
-                <Icons.Send />
-              </button>
-            </form>
-          </div>
-          <div className="mt-8 flex justify-between items-center text-[8px] md:text-[9px] mono font-bold uppercase tracking-[0.4em] opacity-10">
-            <div className="flex gap-8">
-              <span>{isLocalMode ? 'LOCAL_NODE' : 'CORE_STREAM'}</span>
-              <span>8MS</span>
-            </div>
-            <span>V_9.0.0_STORM_PULSE</span>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-export default App;
+                      m.role === Role.USER ? 'text-zinc-600 font-medium italic text-right' : (isLabibaMode ? 'text-pink-100 font-semibold drop-shadow-[0_0_12px_rgba(255,182,193,0.4)]' : '
