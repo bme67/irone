@@ -72,15 +72,19 @@ const ForestPath = ({ theme }: { theme: ThemeType }) => {
         </defs>
 
         <g className="fill-black" style={{ opacity: forestOpacity }}>
-          {/* Deep Left Forest */}
-          <path d="M-50,800 L0,300 L80,450 L40,470 L120,580 L80,600 L200,750 L0,800 Z" opacity="0.4" />
-          <path d="M0,800 L30,400 L90,480 L50,490 L130,580 L70,600 L180,750 L0,800 Z" opacity="0.7" />
-          <path d="M0,800 L0,450 L40,480 L10,490 L60,550 L30,560 L90,650 L0,800 Z" />
-          
-          {/* Deep Right Forest */}
-          <path d="M1250,800 L1200,320 L1120,470 L1160,490 L1080,600 L1120,620 L1000,770 L1200,800 Z" opacity="0.4" />
-          <path d="M1200,800 L1170,380 L1110,480 L1150,500 L1070,600 L1130,620 L1020,770 L1200,800 Z" opacity="0.7" />
-          <path d="M1200,800 L1200,420 L1160,470 L1190,480 L1140,540 L1170,550 L1110,640 L1200,800 Z" />
+          {/* Deep Forest Silhouettes - Left Side */}
+          <path d="M-80,800 L-20,250 L100,450 L50,470 L140,580 L90,600 L220,750 L-80,800 Z" opacity="0.3" />
+          <path d="M-40,800 L10,320 L120,470 L70,490 L160,600 L100,620 L250,770 L-40,800 Z" opacity="0.4" />
+          <path d="M0,800 L30,400 L110,500 L60,510 L140,620 L80,640 L200,780 L0,800 Z" opacity="0.6" />
+          <path d="M-20,800 L20,430 L80,520 L40,530 L100,610 L60,630 L160,760 L-20,800 Z" opacity="0.8" />
+          <path d="M0,800 L0,480 L50,530 L20,540 L70,620 L40,640 L110,750 L0,800 Z" />
+
+          {/* Deep Forest Silhouettes - Right Side */}
+          <path d="M1280,800 L1220,280 L1100,470 L1150,490 L1060,600 L1110,620 L980,770 L1280,800 Z" opacity="0.3" />
+          <path d="M1240,800 L1190,350 L1080,500 L1130,520 L1040,630 L1100,650 L950,790 L1240,800 Z" opacity="0.4" />
+          <path d="M1200,800 L1170,410 L1090,520 L1140,540 L1060,640 L1120,660 L1000,780 L1200,800 Z" opacity="0.6" />
+          <path d="M1220,800 L1180,440 L1120,530 L1160,550 L1100,620 L1140,640 L1040,760 L1220,800 Z" opacity="0.8" />
+          <path d="M1200,800 L1200,490 L1150,540 L1180,550 L1130,630 L1160,650 L1090,750 L1200,800 Z" />
         </g>
 
         <rect width="1200" height="800" fill="url(#mistGrad)" />
@@ -451,4 +455,68 @@ const App: React.FC = () => {
                       )}
                     </div>
                     <div className={`text-base md:text-xl leading-relaxed ${
-                      m.role === Role.USER ? 'text-zinc-600 font-medium italic text-right' : (isLabibaMode ? 'text-pink-100 font-semibold drop-shadow-[0_0_12px_rgba(255,182,193,0.4)]' : '
+                      m.role === Role.USER ? 'text-zinc-600 font-medium italic text-right' : (isLabibaMode ? 'text-pink-100 font-semibold drop-shadow-[0_0_12px_rgba(255,182,193,0.4)]' : 'text-zinc-100 font-bold')
+                    }`}>
+                      {m.content}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {currentResponse && (
+                <div className="message-fade-in">
+                  <div className="flex flex-col gap-2">
+                    <div className={`mono text-[8px] font-black uppercase tracking-widest animate-pulse ${accentColor} opacity-40`}>
+                      ...
+                    </div>
+                    <div className="text-base md:text-xl leading-relaxed text-zinc-100 font-bold">
+                      {currentResponse}
+                      <span className={`cursor-blink ml-1 ${accentColor}`}></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <div ref={messagesEndRef} className="h-4" />
+        </div>
+      </main>
+
+      <footer className={`fixed bottom-0 left-0 right-0 p-6 md:p-12 z-50`}>
+        <div className="max-w-3xl mx-auto w-full">
+          <div className={`border-b-2 transition-all duration-300 ${borderColor}`}>
+            <form onSubmit={handleSubmit} className="flex items-center">
+              <input 
+                ref={inputRef}
+                autoFocus
+                className="w-full bg-transparent py-4 md:py-6 text-base md:text-xl text-white placeholder:text-zinc-900 focus:outline-none mono font-bold uppercase tracking-wider"
+                placeholder={isTyping ? "" : "SPEAK..."}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isTyping}
+                spellCheck="false"
+                autoComplete="off"
+              />
+              <button 
+                type="submit"
+                disabled={!input.trim() || isTyping}
+                className={`p-2 transition-transform active:scale-90 disabled:opacity-0 ${accentColor}`}
+              >
+                <Icons.Send />
+              </button>
+            </form>
+          </div>
+          <div className="mt-8 flex justify-between items-center text-[8px] md:text-[9px] mono font-bold uppercase tracking-[0.4em] opacity-10">
+            <div className="flex gap-8">
+              <span>{isLocalMode ? 'LOCAL_NODE' : 'CORE_STREAM'}</span>
+              <span>8MS</span>
+            </div>
+            <span>V_11.0.0_DEEP_FOREST</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;

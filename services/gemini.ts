@@ -5,15 +5,12 @@ import { getLocalResponseStream } from "../localBrain.ts";
 
 export const streamWithAI = async function* (
   message: string,
-  // Added array brackets to type history as an array of objects to fix parameter assignment and filter method errors
   history: { role: string; parts: { text: string }[] }[] = [],
   isConciseMode: boolean = false,
   isLabibaMode: boolean = false
 ) {
   const hasApiKey = typeof process !== 'undefined' && !!process.env.API_KEY;
-  
-  // Re-verify Labiba mode
-  const labibaKeywords = ["i am labiba", "moi labiba", "labiba nushan"];
+  const labibaKeywords = ["i am labiba", "moi labiba", "labiba nushan", "it's labiba", "queen labiba"];
   const isNowLabiba = isLabibaMode || labibaKeywords.some(k => message.toLowerCase().includes(k));
 
   if (!hasApiKey) {
@@ -22,13 +19,9 @@ export const streamWithAI = async function* (
   }
 
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
   let instruction = isConciseMode ? CONCISE_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
-  if (isNowLabiba) {
-    instruction = LABIBA_SYSTEM_INSTRUCTION;
-  }
+  if (isNowLabiba) instruction = LABIBA_SYSTEM_INSTRUCTION;
 
-  // history is now correctly typed as an array, so filter and slice are available
   const contents = history
     .filter(h => h.role === 'user' || h.role === 'model')
     .slice(-15)
@@ -37,10 +30,7 @@ export const streamWithAI = async function* (
       parts: [{ text: h.parts[0].text }]
     }));
 
-  contents.push({
-    role: "user",
-    parts: [{ text: message }]
-  });
+  contents.push({ role: "user", parts: [{ text: message }] });
 
   try {
     const streamResponse = await ai.models.generateContentStream({
@@ -48,18 +38,25 @@ export const streamWithAI = async function* (
       contents: contents,
       config: {
         systemInstruction: instruction,
-        temperature: isNowLabiba ? 0.7 : 1.2, // More savage for normal users
+        temperature: isNowLabiba ? 0.7 : 1.1,
         topP: 0.95,
-        // Removed maxOutputTokens as it is recommended to avoid it or set a thinkingBudget on Gemini 3 models to prevent empty responses
         tools: [{ googleSearch: {} }],
       },
     });
 
     let hasProducedText = false;
-    for await (const chunk of streamResponse) {
-      if (chunk.text) {
-        hasProducedText = true;
-        yield chunk.text;
+    try {
+      for await (const chunk of streamResponse) {
+        if (chunk.text) {
+          hasProducedText = true;
+          yield chunk.text;
+        }
+      }
+    } catch (streamError: any) {
+      // If stream breaks midway (e.g. safety filter or quota hit)
+      console.warn("Stream interrupted, falling back:", streamError);
+      if (!hasProducedText) {
+        yield* getLocalResponseStream(message, isNowLabiba);
       }
     }
 
