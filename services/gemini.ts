@@ -8,7 +8,7 @@ export const streamWithAI = async function* (
   history: { role: string; parts: { text: string }[] }[] = [],
   isLabibaMode: boolean = false
 ) {
-  const hasApiKey = typeof process !== 'undefined' && !!process.env.API_KEY;
+  const apiKey = process.env.API_KEY;
   const labibaKeywords = [
     "i am labiba", 
     "moi labiba", 
@@ -22,20 +22,18 @@ export const streamWithAI = async function* (
   
   const isNowLabiba = isLabibaMode || labibaKeywords.some(k => message.toLowerCase().includes(k));
 
-  if (!hasApiKey) {
+  if (!apiKey) {
+    console.warn("API_KEY missing, falling back to local brain.");
     yield* getLocalResponseStream(message, isNowLabiba);
     return;
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  let instruction = isNowLabiba ? LABIBA_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
-
-  // Re-emphasizing the "Answer-First" requirement in the runtime prompt
-  instruction += "\n\nCRITICAL DIRECTIVE: YOU MUST ANSWER THE USER'S QUESTION FACTUALLY BEFORE YOU START INSULTING THEM. IF YOU ONLY INSULT WITHOUT ANSWERING, YOU FAIL. KEEP IT UNDER 5 LINES.";
+  const ai = new GoogleGenAI({ apiKey });
+  const instruction = isNowLabiba ? LABIBA_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
 
   const contents: any[] = history
     .filter(h => h.role === 'user' || h.role === 'model')
-    .slice(-10) // Increased context slightly
+    .slice(-6) // Maintain a concise history for faster responses
     .map(h => ({
       role: h.role,
       parts: [{ text: h.parts[0].text }]
@@ -49,32 +47,28 @@ export const streamWithAI = async function* (
       contents: contents,
       config: {
         systemInstruction: instruction,
-        temperature: isNowLabiba ? 0.7 : 0.9, // Reduced temperature slightly for more "factual" correctness while staying savage
-        topP: 0.9,
-        topK: 32,
-        thinkingConfig: { thinkingBudget: 0 }
+        temperature: isNowLabiba ? 0.7 : 1.0, 
+        topP: 0.95,
+        topK: 40,
       },
     });
 
-    let hasProducedText = false;
-    try {
-      for await (const chunk of streamResponse) {
-        if (chunk.text) {
-          hasProducedText = true;
-          yield chunk.text;
-        }
+    let hasText = false;
+    for await (const chunk of streamResponse) {
+      const text = chunk.text;
+      if (text) {
+        hasText = true;
+        yield text;
       }
-    } catch (streamError: any) {
-      console.warn("Stream interrupted:", streamError);
-      if (!hasProducedText) yield* getLocalResponseStream(message, isNowLabiba);
     }
 
-    if (!hasProducedText) {
-      yield* getLocalResponseStream(message, isNowLabiba);
+    if (!hasText) {
+      throw new Error("Empty response from Gemini API");
     }
 
   } catch (error: any) {
-    console.error("API Error:", error);
+    console.error("Gemini API Error:", error);
+    // Silent fallback to local brain for better UX
     yield* getLocalResponseStream(message, isNowLabiba);
   }
 };

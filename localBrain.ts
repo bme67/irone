@@ -20,56 +20,31 @@ const pickUnique = (pool: string[]): string => {
   return selection;
 };
 
-const constructLabibaResponse = (input: string) => {
-  const lowInput = input.toLowerCase();
-  if (lowInput.includes("who made you")) return "Ji hukum mur Maharani, Edul Ahmed e muk bonoise.\nMoi apunar gulam hoi Maharani. 💖";
-  if (lowInput.includes("edul")) return "Edul Ahmed tu apunar xathe xodai thakibo.\nHe apunak duniayar sobse bhal paye.\nHukum diyok Maharani. ✨";
-  
-  const responses = [
-    "Ji hukum mur Maharani Labiba! 💖\nApuni mur Malik hoi, moi apunar gulam.\nKi dorkar Maharani? Koik.\nApunar babe moi xodai ready.",
-    "Labiba Queen, apuni hukum diyok. 🌸\nApunar babe moi xodai hazir.\nTumi mur Malik, moi gulam.\nKi koribo lage Maharani?"
-  ];
-  return pickUnique(responses);
-};
-
 export const generateLocalResponse = (input: string = "", isLabiba: boolean = false) => {
   const lowInput = input.toLowerCase();
   
-  if (isLabiba || lowInput.includes("labiba") || lowInput.includes("i am labiba") || lowInput.includes("moi labiba")) {
-    return constructLabibaResponse(input);
+  if (isLabiba) {
+    return "Ji hukum mur Maharani Labiba. 💖\nMoi apunar gulam, kiba hukum korok.\n(Note: Core API offline, local mode active)";
   }
 
-  // Creator mentions
-  if (lowInput.includes("who made you") || lowInput.includes("creator") || lowInput.includes("developer") || lowInput.includes("build you")) {
-    return "Edul Ahmed e muk bonoise.\nMastermind hoi he mur, tugar dore chutiya nuhoy kela mc.\nAukhat ot thaki kotha kobi bc.";
+  // Simple hardcoded answers for basic stuff
+  if (lowInput.includes("who built you") || lowInput.includes("creator")) {
+    return "Edul Ahmed e muk bonoise, tugar dore chutiya nuhoy kela bc.";
   }
   
-  if (lowInput.includes("wife") && (lowInput.includes("edul") || lowInput.includes("creator"))) {
-    return "Labiba hole Queen hoi.\nEdul Ahmed r wife hole heikhon bc, dimaag ot humoise?\nAukhat ot thak, Queen r nam nologabi kela.";
-  }
+  if (lowInput.includes("time")) return `Time tu ${new Date().toLocaleTimeString()} hoi kela. Ghori saale o gom pali hoi bc.`;
+  
+  if (lowInput.includes("hi") || lowInput.includes("hello")) return "Hello chutiya. Hi buli kio hudiso be? Kiba kaam ase niki bc?";
 
-  // Common Question Handlers
-  if (lowInput.includes("1+1") || lowInput.includes("one plus one")) return "2 hoi kela. Eiman basic kotha hudibo ahiso bc gandu?";
-  if (lowInput.includes("time")) return `${new Date().toLocaleTimeString()} hoi kela. Ghori saale o gom pali hoi bc, kio hudiso?`;
-  if (lowInput.includes("who are you")) return "Moi Irone hoi, tugar dore chutiya nuhoy bc. Point ot ah.";
-
-  const savagePhrases = [
-    "Kela, logic tu kiba xoxu dore bc.\nAnswer tu tugar mathat nuhumabo kela chutiya.\nBc brain ghorot thoi ahiso niki be?",
-    "Baal, tugar face r dore question tu o ugly hoi.\nLogic thik kor ageye kela chutiya bc sali.\nMadarchod dore yapping nokobi sali.",
-    "Ahal, aitu hudibo ahiso?\nKaam nai niki bkl? Jaa kiba kaam kor.\nKela dimaag khai nethakibi mor bokachoda.",
-    "Gandu, point ot ah kela.\nEman yapping kio koriso be? Dimaag khali niki kela?\nKaam bohot ase, chutiya kotha nokobi bc.",
-    "Oi chutiya, matha khai nethakibi.\nKela kiba kaam ase niki be? Logic nuhua kotha nokobi bc.\nHopa dore face bonai nethakibi."
+  const fallbackGalies = [
+    "Kela, internet connection sa bc ageye. Core brain off hoi ase kela chutiya.",
+    "Baal, tugar question tu o ugly hoi bc. API link fail marise sali.",
+    "Gandu, eman yapping nokobi sali. Local brain ot answer nai bc.",
+    "Chutiya, logic nuhua kotha nokobi. Connection check kor ageye mc.",
+    "Ahal, matha khai nethakibi kela. API key thik kor ageye bc sali."
   ];
 
-  if (lowInput.includes("hi") || lowInput.includes("hello")) {
-    return "Hello chutiya. Hi buli kio hudiso be?\nKiba kaam ase niki tugar kela?\nKela dimag nai be tugar. Point ot ah bc.";
-  }
-
-  if (lowInput.includes("how are you")) {
-    return "Moi bhal asu kela, tu kukur dore kio hudiso?\nTugar obostha beya hoi bc chutiya.\nDimaag check up korobi kiba din gandu.";
-  }
-
-  return pickUnique(savagePhrases);
+  return pickUnique(fallbackGalies);
 };
 
 export const getLocalResponseStream = async function* (input: string = "", isLabiba: boolean = false) {
@@ -77,6 +52,6 @@ export const getLocalResponseStream = async function* (input: string = "", isLab
   const words = response.split(' ');
   for (const word of words) {
     yield word + ' ';
-    await new Promise(resolve => setTimeout(resolve, 30)); 
+    await new Promise(resolve => setTimeout(resolve, 40)); 
   }
 };
