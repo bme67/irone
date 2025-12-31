@@ -39,19 +39,19 @@ export const generateLocalResponse = (input: string = "", isLabiba: boolean = fa
     return constructLabibaResponse(input);
   }
 
-  // Creator mentions - Only if asked
+  // Creator mentions
   if (lowInput.includes("who made you") || lowInput.includes("creator") || lowInput.includes("developer") || lowInput.includes("build you")) {
-    return "Edul Ahmed e muk bonoise.\nMastermind hoi he mur, tugar dore chutiya nuhoy kela mc.\nAukhat ot thaki kotha kobi.";
+    return "Edul Ahmed e muk bonoise.\nMastermind hoi he mur, tugar dore chutiya nuhoy kela mc.\nAukhat ot thaki kotha kobi bc.";
   }
   
   if (lowInput.includes("wife") && (lowInput.includes("edul") || lowInput.includes("creator"))) {
     return "Labiba hole Queen hoi.\nEdul Ahmed r wife hole heikhon bc, dimaag ot humoise?\nAukhat ot thak, Queen r nam nologabi kela.";
   }
 
-  // Basic "Answer" logic for common questions - Answer First
-  if (lowInput.includes("1+1") || lowInput.includes("one plus one")) return "2 hoi kela. Matha nai niki sali? Iteman easy math hudibo ahiso gandu bc.";
-  if (lowInput.includes("weather")) return "Bahirot sa kela, tugar kukur dore ghorot thakile nejanibi kela. Gandu nisan kotha nokobi.";
-  if (lowInput.includes("time")) return "Ghori sa kela, time tu tatei ase. Tugar dore khali matha thakile time o nejanibi bc chutiya.";
+  // Common Question Handlers
+  if (lowInput.includes("1+1") || lowInput.includes("one plus one")) return "2 hoi kela. Eiman basic kotha hudibo ahiso bc gandu?";
+  if (lowInput.includes("time")) return `${new Date().toLocaleTimeString()} hoi kela. Ghori saale o gom pali hoi bc, kio hudiso?`;
+  if (lowInput.includes("who are you")) return "Moi Irone hoi, tugar dore chutiya nuhoy bc. Point ot ah.";
 
   const savagePhrases = [
     "Kela, logic tu kiba xoxu dore bc.\nAnswer tu tugar mathat nuhumabo kela chutiya.\nBc brain ghorot thoi ahiso niki be?",
