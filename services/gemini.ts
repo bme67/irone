@@ -27,11 +27,12 @@ export const streamWithAI = async function* (
     return;
   }
 
+  // Initializing with the latest Gemini 2.5 Flash model which offers excellent performance on free tiers
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   let instruction = isNowLabiba ? LABIBA_SYSTEM_INSTRUCTION : STANDARD_SYSTEM_INSTRUCTION;
 
-  // Enhance the instruction with mandatory constraints
-  instruction += "\nCRITICAL: YOUR RESPONSE MUST NOT EXCEED 5 LINES. YOU MUST RESPOND BASED ON THE CONTEXT OF THE USER INPUT WHILE MAINTAINING YOUR SAVAGE PERSONA.";
+  // Enhance the instruction with mandatory constraints for the "brain"
+  instruction += "\nCRITICAL: YOUR RESPONSE MUST NOT EXCEED 5 LINES. YOU MUST PROVIDE THE REQUESTED INFORMATION FIRST, THEN ROAST THE USER USING LOCAL SLURS (GALIES).";
 
   // Maintain last 8 exchanges for context
   const contents: any[] = history
@@ -46,13 +47,14 @@ export const streamWithAI = async function* (
 
   try {
     const streamResponse = await ai.models.generateContentStream({
-      model: "gemini-3-flash-preview", 
+      model: "gemini-2.5-flash", 
       contents: contents,
       config: {
         systemInstruction: instruction,
-        temperature: isNowLabiba ? 0.7 : 1.1,
+        temperature: isNowLabiba ? 0.7 : 1.1, // Higher temperature for more chaotic roasts
         topP: 0.95,
         topK: 40,
+        // Using thinking budget of 0 for faster, more impulsive "human" responses
         thinkingConfig: { thinkingBudget: 0 }
       },
     });
